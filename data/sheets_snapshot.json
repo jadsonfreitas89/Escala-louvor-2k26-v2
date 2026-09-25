@@ -1,6 +1,6 @@
 {
   "initialized": true,
-  "timestamp": "2026-08-31T19:30:52.281Z",
+  "timestamp": "2026-09-25T18:49:27.821Z",
   "escalas": {
     "19/08/2026": {
       "data": "19/08/2026",
@@ -566,8 +566,8 @@
     "04/09/2026": {
       "data": "04/09/2026",
       "dirigente": "ISA",
-      "vocal": "SULAMITA X LUCIANA",
-      "musicos": "SÉRGIO X PIETRO",
+      "vocal": "NEUZA X LUCIANA",
+      "musicos": "SERGIO X PIETRO",
       "mesario": "JADSON",
       "louvores": "",
       "uniforme": "",
@@ -581,7 +581,7 @@
           "funcao": "Mesário de Som"
         },
         {
-          "nome": "SULAMITA",
+          "nome": "NEUZA",
           "funcao": "Vocal"
         },
         {
@@ -589,7 +589,471 @@
           "funcao": "Vocal"
         },
         {
-          "nome": "SÉRGIO",
+          "nome": "SERGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "06/09/2026": {
+      "data": "06/09/2026",
+      "dirigente": "CEIA",
+      "vocal": "CEIA",
+      "musicos": "CEIA",
+      "mesario": "CEIA",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "CEIA",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "CEIA",
+          "funcao": "Mesário de Som"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "08/09/2026": {
+      "data": "08/09/2026",
+      "dirigente": "CARIVALDO",
+      "vocal": "CRIS X MAISA",
+      "musicos": "JACÓ X PIETRO",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "CARIVALDO",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "CRIS",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "MAISA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "JACÓ",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "11/09/2026": {
+      "data": "11/09/2026",
+      "dirigente": "ISA",
+      "vocal": "IVONE X NEUZA",
+      "musicos": "VICTORIA X PIETRO",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "ISA",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "IVONE",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "NEUZA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "VICTORIA",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "13/09/2026": {
+      "data": "13/09/2026",
+      "dirigente": "RODRIGO",
+      "vocal": "THAIS X NEUZA X TUIDA",
+      "musicos": "RODRIGO X JADSON X GUILHERME",
+      "mesario": "",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "RODRIGO",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "THAIS",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "NEUZA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "TUIDA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "GUILHERME",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "15/09/2026": {
+      "data": "15/09/2026",
+      "dirigente": "JADSON",
+      "vocal": "CRIS X MAISA",
+      "musicos": "SERGIO X OTAVIO",
+      "mesario": "",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "JADSON",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "CRIS",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "MAISA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "SERGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "OTAVIO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "18/09/2026": {
+      "data": "18/09/2026",
+      "dirigente": "VICTORIA",
+      "vocal": "ISA X LUCIANA X NEUZA",
+      "musicos": "VICTORIA X SERGIO X PIETRO",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "VICTORIA",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "ISA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "LUCIANA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "NEUZA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "SERGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "20/09/2026": {
+      "data": "20/09/2026",
+      "dirigente": "VICTORIA",
+      "vocal": "SULAMITA X TUIDA X ISA",
+      "musicos": "VICTORIA X SERGIO X VITORIA",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "VICTORIA",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "SULAMITA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "TUIDA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "ISA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "SERGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "VITORIA",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "22/09/2026": {
+      "data": "22/09/2026",
+      "dirigente": "JACÓ",
+      "vocal": "MAISA X TUIDA",
+      "musicos": "JACÓ X OTAVIO",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "JACÓ",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "MAISA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "TUIDA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "OTAVIO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "25/09/2026": {
+      "data": "25/09/2026",
+      "dirigente": "JADSON",
+      "vocal": "NEUZA X LUCIANA",
+      "musicos": "VICTORIA X SERGIO X PIETRO",
+      "mesario": "",
+      "louvores": "1. Vineyard - Vem, Esta é a Hora (Come, Now Is The Time To Worship) - Ao Vivo\n2. Vem Cantar Louvores-Brás Adoração(LETRA\n3. Aclame ao Senhor   Diante do Trono (Legendado\n4. CREIO QUE TU ÉS A CURA - Gabriela Rocha (VOZ com LETRA\n5. Eu Quero É Deus (Ao Vivo",
+      "uniforme": "CAMISA BRANCA E GRAVATA VERMELHA",
+      "membros": [
+        {
+          "nome": "JADSON",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "NEUZA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "LUCIANA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "VICTORIA",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "SERGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": "3d94e76a"
+    },
+    "27/09/2026": {
+      "data": "27/09/2026",
+      "dirigente": "RODRIGO",
+      "vocal": "THAIS X IVONE X NEUZA",
+      "musicos": "RORIGO X JADSON VITORIA X RODRIGO X JADSON X VICTORIA",
+      "mesario": "",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "RODRIGO",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "THAIS",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "IVONE",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "NEUZA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "RORIGO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "JADSON VITORIA",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "VICTORIA",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "29/09/2026": {
+      "data": "29/09/2026",
+      "dirigente": "CARIVALDO",
+      "vocal": "TUIDA X CRIS",
+      "musicos": "JACÓ X SERGIO X OTAVIO",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "CARIVALDO",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "TUIDA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "CRIS",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "JACÓ",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "SERGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "OTAVIO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "02/10/2026": {
+      "data": "02/10/2026",
+      "dirigente": "JACÓ",
+      "vocal": "MAISA X LUCIANA",
+      "musicos": "JACÓ X SERGIO X PIETRO",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "JACÓ",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "MAISA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "LUCIANA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "SERGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "06/10/2026": {
+      "data": "06/10/2026",
+      "dirigente": "ISA",
+      "vocal": "NEUZA X CRIS",
+      "musicos": "SERGIO X PIETRO",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "ISA",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "NEUZA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "CRIS",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "SERGIO",
           "funcao": "Músico"
         },
         {
@@ -644,5 +1108,16 @@
       "dataEscala": "25/08/2026"
     }
   },
-  "recados": {}
+  "recados": {
+    "14e61168-6433-4dd2-8b87-97099c9df434": {
+      "id": "14e61168-6433-4dd2-8b87-97099c9df434",
+      "titulo": "oração na catedral próximo sábado",
+      "ativo": "SIM"
+    },
+    "c411caec-d891-49ee-a593-c30028064b6a": {
+      "id": "c411caec-d891-49ee-a593-c30028064b6a",
+      "titulo": "oração na catedral próximo sábado",
+      "ativo": "SIM"
+    }
+  }
 }

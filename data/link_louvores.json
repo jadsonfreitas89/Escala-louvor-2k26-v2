@@ -4,69 +4,181 @@
     "data": "23/08/2026",
     "ordem": "1",
     "louvor": "Eu te busco",
-    "link_youtube": ""
+    "link_youtube": "",
+    "dataEscala": "23/08/2026"
   },
   {
     "id": "591c72df-5676-476e-8106-64aaf4bc7599",
     "data": "23/08/2026",
     "ordem": "2",
     "louvor": "Reina em mim",
-    "link_youtube": ""
+    "link_youtube": "",
+    "dataEscala": "23/08/2026"
   },
   {
     "id": "8c592672-ce5a-465c-9894-2d808983ed89",
     "data": "23/08/2026",
     "ordem": "3",
     "louvor": "Abre senhor os meus olhos",
-    "link_youtube": ""
+    "link_youtube": "",
+    "dataEscala": "23/08/2026"
   },
   {
     "id": "louvor-30082026-0",
     "data": "",
     "ordem": "1",
     "louvor": "Toma o Teu lugar",
-    "link_youtube": "https://youtu.be/7KeFbagI_J8"
+    "link_youtube": "https://youtu.be/7KeFbagI_J8",
+    "dataEscala": ""
   },
   {
     "id": "louvor-30082026-1",
     "data": "",
     "ordem": "2",
     "louvor": "Hoje é tempo de Louvar a Deus",
-    "link_youtube": "https://youtu.be/x_cGOvOP2cc"
+    "link_youtube": "https://youtu.be/x_cGOvOP2cc",
+    "dataEscala": ""
   },
   {
     "id": "yt-1787850084300-0-76w0",
     "data": "",
     "ordem": "3",
     "louvor": "Davi Sacer e Veronica Sacer – Te Louvarei (15 Anos) [Vídeo Oficial",
-    "link_youtube": "https://www.youtube.com/watch?v=1S0NMgqipV4"
+    "link_youtube": "https://www.youtube.com/watch?v=1S0NMgqipV4",
+    "dataEscala": ""
   },
   {
     "id": "yt-1787850084300-1-458w",
     "data": "",
     "ordem": "4",
     "louvor": "Sublime (Ao Vivo) | fhop music",
-    "link_youtube": "https://www.youtube.com/watch?v=7GWZwO0MdsY"
+    "link_youtube": "https://www.youtube.com/watch?v=7GWZwO0MdsY",
+    "dataEscala": ""
   },
   {
     "id": "yt-1787850084300-2-0l5a",
     "data": "",
     "ordem": "5",
     "louvor": "Bendito É O Rei (Ao Vivo) | Fhop Music",
-    "link_youtube": "https://www.youtube.com/watch?v=CmM1pcHohdI"
+    "link_youtube": "https://www.youtube.com/watch?v=CmM1pcHohdI",
+    "dataEscala": ""
   },
   {
     "id": "yt-1787850084300-3-ab7q",
     "data": "",
     "ordem": "6",
     "louvor": "Digno de Tudo + Te Exaltamos | Emaús Music",
-    "link_youtube": "https://www.youtube.com/watch?v=cQlEODXxnu0"
+    "link_youtube": "https://www.youtube.com/watch?v=cQlEODXxnu0",
+    "dataEscala": ""
   },
   {
     "id": "yt-1787850084300-4-4ukh",
     "data": "",
     "ordem": "7",
     "louvor": "Nívea Soares | Que Se Abram Os Céus | DVD Reino de Justiça",
-    "link_youtube": "https://www.youtube.com/watch?v=kXKwkQk528A"
+    "link_youtube": "https://www.youtube.com/watch?v=kXKwkQk528A",
+    "dataEscala": ""
+  },
+  {
+    "id": "song-1788707668817-uqnwf",
+    "data": "",
+    "dataEscala": "",
+    "ordem": "1",
+    "louvor": "Tua alegria",
+    "titulo": "Tua alegria",
+    "youtubeVideoId": "63B6H9Dra_8",
+    "videoId": "63B6H9Dra_8",
+    "youtubeUrl": "https://youtu.be/63B6H9Dra_8?is=16HS4BTgB6APk58b",
+    "linkYoutube": "https://youtu.be/63B6H9Dra_8?is=16HS4BTgB6APk58b",
+    "link_youtube": "https://youtu.be/63B6H9Dra_8?is=16HS4BTgB6APk58b",
+    "url": "https://youtu.be/63B6H9Dra_8?is=16HS4BTgB6APk58b",
+    "playlistId": "",
+    "playlistTitle": "",
+    "thumbnailUrl": "https://img.youtube.com/vi/63B6H9Dra_8/hqdefault.jpg"
+  },
+  {
+    "id": "yt-1790129123009-0-3q49",
+    "data": "",
+    "dataEscala": "",
+    "ordem": "1",
+    "louvor": "Vineyard - Vem, Esta é a Hora (Come, Now Is The Time To Worship) - Ao Vivo",
+    "titulo": "Vineyard - Vem, Esta é a Hora (Come, Now Is The Time To Worship) - Ao Vivo",
+    "youtubeVideoId": "7j5aLkEe_vE",
+    "videoId": "7j5aLkEe_vE",
+    "youtubeUrl": "https://www.youtube.com/watch?v=7j5aLkEe_vE",
+    "linkYoutube": "https://www.youtube.com/watch?v=7j5aLkEe_vE",
+    "link_youtube": "https://www.youtube.com/watch?v=7j5aLkEe_vE",
+    "url": "https://www.youtube.com/watch?v=7j5aLkEe_vE",
+    "playlistId": "",
+    "playlistTitle": "",
+    "thumbnailUrl": "https://img.youtube.com/vi/7j5aLkEe_vE/hqdefault.jpg"
+  },
+  {
+    "id": "yt-1790129123009-1-4i3d",
+    "data": "",
+    "dataEscala": "",
+    "ordem": "2",
+    "louvor": "Vem Cantar Louvores-Brás Adoração(LETRA",
+    "titulo": "Vem Cantar Louvores-Brás Adoração(LETRA",
+    "youtubeVideoId": "JmQv01CNUOk",
+    "videoId": "JmQv01CNUOk",
+    "youtubeUrl": "https://www.youtube.com/watch?v=JmQv01CNUOk",
+    "linkYoutube": "https://www.youtube.com/watch?v=JmQv01CNUOk",
+    "link_youtube": "https://www.youtube.com/watch?v=JmQv01CNUOk",
+    "url": "https://www.youtube.com/watch?v=JmQv01CNUOk",
+    "playlistId": "",
+    "playlistTitle": "",
+    "thumbnailUrl": "https://img.youtube.com/vi/JmQv01CNUOk/hqdefault.jpg"
+  },
+  {
+    "id": "yt-1790129123009-2-hd8j",
+    "data": "",
+    "dataEscala": "",
+    "ordem": "3",
+    "louvor": "Aclame ao Senhor   Diante do Trono (Legendado",
+    "titulo": "Aclame ao Senhor   Diante do Trono (Legendado",
+    "youtubeVideoId": "nxWyNXB042M",
+    "videoId": "nxWyNXB042M",
+    "youtubeUrl": "https://www.youtube.com/watch?v=nxWyNXB042M",
+    "linkYoutube": "https://www.youtube.com/watch?v=nxWyNXB042M",
+    "link_youtube": "https://www.youtube.com/watch?v=nxWyNXB042M",
+    "url": "https://www.youtube.com/watch?v=nxWyNXB042M",
+    "playlistId": "",
+    "playlistTitle": "",
+    "thumbnailUrl": "https://img.youtube.com/vi/nxWyNXB042M/hqdefault.jpg"
+  },
+  {
+    "id": "yt-1790129123009-3-hb8c",
+    "data": "",
+    "dataEscala": "",
+    "ordem": "4",
+    "louvor": "CREIO QUE TU ÉS A CURA - Gabriela Rocha (VOZ com LETRA",
+    "titulo": "CREIO QUE TU ÉS A CURA - Gabriela Rocha (VOZ com LETRA",
+    "youtubeVideoId": "I-7lM4m0jyM",
+    "videoId": "I-7lM4m0jyM",
+    "youtubeUrl": "https://www.youtube.com/watch?v=I-7lM4m0jyM",
+    "linkYoutube": "https://www.youtube.com/watch?v=I-7lM4m0jyM",
+    "link_youtube": "https://www.youtube.com/watch?v=I-7lM4m0jyM",
+    "url": "https://www.youtube.com/watch?v=I-7lM4m0jyM",
+    "playlistId": "",
+    "playlistTitle": "",
+    "thumbnailUrl": "https://img.youtube.com/vi/I-7lM4m0jyM/hqdefault.jpg"
+  },
+  {
+    "id": "yt-1790129123009-4-fu00",
+    "data": "",
+    "dataEscala": "",
+    "ordem": "5",
+    "louvor": "Eu Quero É Deus (Ao Vivo",
+    "titulo": "Eu Quero É Deus (Ao Vivo",
+    "youtubeVideoId": "59wAeEz3iYQ",
+    "videoId": "59wAeEz3iYQ",
+    "youtubeUrl": "https://www.youtube.com/watch?v=59wAeEz3iYQ",
+    "linkYoutube": "https://www.youtube.com/watch?v=59wAeEz3iYQ",
+    "link_youtube": "https://www.youtube.com/watch?v=59wAeEz3iYQ",
+    "url": "https://www.youtube.com/watch?v=59wAeEz3iYQ",
+    "playlistId": "",
+    "playlistTitle": "",
+    "thumbnailUrl": "https://img.youtube.com/vi/59wAeEz3iYQ/hqdefault.jpg"
   }
 ]
