@@ -1,10 +1,12 @@
 import path from "path";
+import { createServer } from "node:http";
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import { createApiApp } from "./src/server/app";
 
 async function startServer() {
   const app = createApiApp();
+  const httpServer = createServer(app);
   const PORT = 3000;
 
   // Headers explícitos para PWA Manifest
@@ -28,7 +30,12 @@ async function startServer() {
 
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: process.env.DISABLE_HMR === "true"
+          ? false
+          : { server: httpServer, protocol: "wss", clientPort: 443 },
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);
@@ -40,7 +47,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`[ESCALA DE LOUVOR] Servidor backend ativo em http://0.0.0.0:${PORT}`);
   });
 }
