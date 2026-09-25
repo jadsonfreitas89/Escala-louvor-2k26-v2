@@ -78,7 +78,7 @@ function cleanDateString(dateStr: string | null | undefined): string {
 
 function loadCachedLinkLouvores() {
   try {
-    if (!fs.existsSync(DATA_DIR)) {
+    if (!process.env.VERCEL && !fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     if (fs.existsSync(LINK_LOUVORES_FILE)) {
@@ -98,6 +98,7 @@ function loadCachedLinkLouvores() {
 }
 
 function saveCachedLinkLouvores() {
+  if (process.env.VERCEL) return;
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });

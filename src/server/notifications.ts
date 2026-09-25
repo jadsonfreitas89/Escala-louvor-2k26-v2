@@ -78,6 +78,7 @@ let currentSnapshot: SheetsSnapshot = {
  * Garante que o diretório de dados exista
  */
 function ensureDataDir() {
+  if (process.env.VERCEL) return;
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -91,7 +92,9 @@ function ensureDataDir() {
  * Carrega notificações do arquivo persistente
  */
 export function loadNotifications(): NotificacaoRecord[] {
-  ensureDataDir();
+  if (!process.env.VERCEL) {
+    ensureDataDir();
+  }
   try {
     if (fs.existsSync(DB_FILE)) {
       const raw = fs.readFileSync(DB_FILE, "utf-8");
@@ -155,6 +158,7 @@ export function loadNotifications(): NotificacaoRecord[] {
  * Salva chaves de notificações lidas no disco
  */
 export function saveMarkedReadKeys() {
+  if (process.env.VERCEL) return;
   ensureDataDir();
   try {
     const list = Array.from(markedReadKeys);
@@ -168,6 +172,7 @@ export function saveMarkedReadKeys() {
  * Salva notificações no disco
  */
 export function saveNotifications() {
+  if (process.env.VERCEL) return;
   ensureDataDir();
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(localNotificacoes, null, 2), "utf-8");
@@ -180,6 +185,7 @@ export function saveNotifications() {
  * Salva hashes de louvores no disco
  */
 function saveLouvoresHashes() {
+  if (process.env.VERCEL) return;
   ensureDataDir();
   try {
     fs.writeFileSync(HASHES_FILE, JSON.stringify(louvoresHashes, null, 2), "utf-8");
@@ -192,6 +198,7 @@ function saveLouvoresHashes() {
  * Salva snapshot do Google Sheets no disco
  */
 export function saveSheetsSnapshot() {
+  if (process.env.VERCEL) return;
   ensureDataDir();
   try {
     fs.writeFileSync(SNAPSHOT_FILE, JSON.stringify(currentSnapshot, null, 2), "utf-8");
