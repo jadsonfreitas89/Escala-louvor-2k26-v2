@@ -1,0 +1,8 @@
+{
+  "name": "Remix Escala Louvor 2K26",
+  "description": "Sistema de gestão de escalas de louvor, integrantes, louvores com links do YouTube, solicitações de troca e comunicados.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

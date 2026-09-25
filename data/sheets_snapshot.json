@@ -1,0 +1,648 @@
+{
+  "initialized": true,
+  "timestamp": "2026-08-31T19:30:52.281Z",
+  "escalas": {
+    "19/08/2026": {
+      "data": "19/08/2026",
+      "dirigente": "Maria",
+      "vocal": "Lucas",
+      "musicos": "João (Guitarra)",
+      "mesario": "Maria",
+      "louvores": "1. Porque Ele Vive, 2. Bondade de Deus [T933309]",
+      "uniforme": "Camisa Branca e Calça Jeans [T933309]",
+      "membros": [
+        {
+          "nome": "Maria",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "Maria",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "Lucas",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "João",
+          "funcao": "Músico",
+          "instrumento": "Guitarra"
+        }
+      ],
+      "louvoresHash": "c5d45e4f"
+    },
+    "31/07/2026": {
+      "data": "31/07/2026",
+      "dirigente": "CARIVALDO",
+      "vocal": "LUCIANA X NEUZA X SAMUEL",
+      "musicos": "VICTORIA X SÉRGIO X PIETRO",
+      "mesario": "JADSON",
+      "louvores": "\n1. E BASTANTE PRA MIM A TUA GRAÇA.",
+      "uniforme": "CAMISA BRANCA",
+      "membros": [
+        {
+          "nome": "CARIVALDO",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "LUCIANA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "NEUZA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "SAMUEL",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "VICTORIA",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "SÉRGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": "e3ad2e65"
+    },
+    "02/08/2026": {
+      "data": "02/08/2026",
+      "dirigente": "CEIA",
+      "vocal": "CEIA",
+      "musicos": "CEIA",
+      "mesario": "CEIA",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "CEIA",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "CEIA",
+          "funcao": "Mesário de Som"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "04/08/2026": {
+      "data": "04/08/2026",
+      "dirigente": "JACÓ",
+      "vocal": "TUIDA X MAISA",
+      "musicos": "JACÓ X PIETRO",
+      "mesario": "",
+      "louvores": "(1) DAMOS GRAÇAS AO SENHOR \n(2) BOM ESTAMOS AQUI \n(3) QUEM PODE LIVRA COMO O SENHOR \n(4) MEU MESTRE \n\nADORAÇÃO: SEJA ENGRANDECIDO \nFINAL: ESTE POVO QUE DEUS LEVANTOU \n",
+      "uniforme": "CAMISA PRETA GRAVATA VERDE",
+      "membros": [
+        {
+          "nome": "JACÓ",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "TUIDA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "MAISA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": "d6684940"
+    },
+    "07/08/2026": {
+      "data": "07/08/2026",
+      "dirigente": "ISA",
+      "vocal": "IVONE X SULAMITA",
+      "musicos": "VICTORIA X SÉRGIO X PIETRO",
+      "mesario": "",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "ISA",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "IVONE",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "SULAMITA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "VICTORIA",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "SÉRGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "09/08/2026": {
+      "data": "09/08/2026",
+      "dirigente": "RODRIGO",
+      "vocal": "THAIS X NEUZA",
+      "musicos": "RODRIGO X VITORINHA",
+      "mesario": "ANIZA",
+      "louvores": "JESUS O REI DA GLÓRIA \nPODER PRA SALVAR \nUMA NOVA HISTÓRIA+ DEUS TEM O MELHOR PRA MIM\nISAÍAS 9 \n\nOFERTA: EMANUEL \n\nADORAÇÃO: PAI NOSSO ( PEDRAS VIVAS \n\nRESERVA: ÚNICO ( FERNANDINHO \n\nFINAL: POSSO TE CHAMAR DE PAÍ ",
+      "uniforme": "CAMISA BRANCA E GRAVATA AMARELA",
+      "membros": [
+        {
+          "nome": "RODRIGO",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "ANIZA",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "THAIS",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "NEUZA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "VITORINHA",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": "a38195ed"
+    },
+    "11/08/2026": {
+      "data": "11/08/2026",
+      "dirigente": "CARIVALDO",
+      "vocal": "CRISTINA X IVONE, CRISTINA, IVONE",
+      "musicos": "SÉRGIO X VITORIA",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "CARIVALDO",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "CRISTINA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "IVONE",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "SÉRGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "VITORIA",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "14/08/2026": {
+      "data": "14/08/2026",
+      "dirigente": "JACÓ",
+      "vocal": "NEUZA X LUCIANA",
+      "musicos": "JACÓ X PIETRO",
+      "mesario": "",
+      "louvores": "\"JESUS O REI DA GLÓRIA \nPODER PRA SALVAR \nUMA NOVA HISTÓRIA+ DEUS TEM O MELHOR PRA MIM\nISAÍAS 9 \nOFERTA: EMANUEL \nADORAÇÃO: PAI NOSSO \nRESERVA: ÚNICO \nFINAL: POSSO TE CHAMAR DE PAI",
+      "uniforme": "CAMISA BRANCA E GRAVATA VERMELHA \n",
+      "membros": [
+        {
+          "nome": "JACÓ",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "NEUZA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "LUCIANA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": "e98322a7"
+    },
+    "16/08/2026": {
+      "data": "16/08/2026",
+      "dirigente": "VICTORIA",
+      "vocal": "SULAMITA X CRIS X TUÍDA",
+      "musicos": "VICTORIA X VITORIA",
+      "mesario": "JADSON",
+      "louvores": "Deus forte como Jeová - Teste , Me ama, Maranata, Rendido estou, Então se verá, Águas purificadoras - Reserva",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "VICTORIA",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "SULAMITA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "CRIS",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "TUÍDA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "VITORIA",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": "fd634ce7"
+    },
+    "18/08/2026": {
+      "data": "18/08/2026",
+      "dirigente": "ISA",
+      "vocal": "IVONE X CRIS",
+      "musicos": "SÉRGIO X PIETRO",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "ISA",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "IVONE",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "CRIS",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "SÉRGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "21/08/2026": {
+      "data": "21/08/2026",
+      "dirigente": "CARIVALDO",
+      "vocal": "TUIDA X LUCIANA X SULAMITA",
+      "musicos": "VICTORIA X SÉRGIO X VITORIA",
+      "mesario": "JADSON",
+      "louvores": "in memorian ",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "CARIVALDO",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "TUIDA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "LUCIANA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "SULAMITA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "VICTORIA",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "SÉRGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "VITORIA",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": "4c55baf1"
+    },
+    "23/08/2026": {
+      "data": "23/08/2026",
+      "dirigente": "RODRIGO",
+      "vocal": "MAISA X IVONE X THAIS",
+      "musicos": "RODRIGO X PIETRO",
+      "mesario": "aniza",
+      "louvores": "Eu te busco, Reina em mim, Abre senhor os meus olhos",
+      "uniforme": "Tudo preto",
+      "membros": [
+        {
+          "nome": "RODRIGO",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "aniza",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "MAISA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "IVONE",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "THAIS",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": "4a068871"
+    },
+    "25/08/2026": {
+      "data": "25/08/2026",
+      "dirigente": "Carivaldo",
+      "vocal": "CRISTINA X Neuza",
+      "musicos": "SÉRGIO X OTAVIO",
+      "mesario": "JADSON",
+      "louvores": "1. Eu te busco (https://youtu.be/JMV-K0d1QYQ)",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "Carivaldo",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "CRISTINA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "Neuza",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "SÉRGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "OTAVIO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": "75fbc5ab"
+    },
+    "28/08/2026": {
+      "data": "28/08/2026",
+      "dirigente": "VICTORIA",
+      "vocal": "NEUZA X LUCIANA X ISA",
+      "musicos": "JACÓ X VITORIA",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "VICTORIA",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "NEUZA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "LUCIANA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "ISA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "JACÓ",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "VITORIA",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "30/08/2026": {
+      "data": "30/08/2026",
+      "dirigente": "JADSON",
+      "vocal": "THAIS X TUIDA X NEUZA",
+      "musicos": "Victoria X VITORIA",
+      "mesario": "Aniza",
+      "louvores": "1. Toma o Teu lugar\n2. Hoje é tempo de Louvar a Deus\n3. Davi Sacer e Veronica Sacer – Te Louvarei (15 Anos) [Vídeo Oficial\n4. Sublime (Ao Vivo) | fhop music\n5. Bendito É O Rei (Ao Vivo) | Fhop Music\n6. Digno de Tudo + Te Exaltamos | Emaús Music\n7. Nívea Soares | Que Se Abram Os Céus | DVD Reino de Justiça",
+      "uniforme": "Roupa off white",
+      "membros": [
+        {
+          "nome": "JADSON",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "Aniza",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "THAIS",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "TUIDA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "NEUZA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "Victoria",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "VITORIA",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": "56b0a1f2"
+    },
+    "01/09/2026": {
+      "data": "01/09/2026",
+      "dirigente": "CARIVALDO",
+      "vocal": "CRISTINA X TUIDA X IVONE",
+      "musicos": "JACÓ X OTAVIO",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "CARIVALDO",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "CRISTINA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "TUIDA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "IVONE",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "JACÓ",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "OTAVIO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    },
+    "04/09/2026": {
+      "data": "04/09/2026",
+      "dirigente": "ISA",
+      "vocal": "SULAMITA X LUCIANA",
+      "musicos": "SÉRGIO X PIETRO",
+      "mesario": "JADSON",
+      "louvores": "",
+      "uniforme": "",
+      "membros": [
+        {
+          "nome": "ISA",
+          "funcao": "Dirigente"
+        },
+        {
+          "nome": "JADSON",
+          "funcao": "Mesário de Som"
+        },
+        {
+          "nome": "SULAMITA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "LUCIANA",
+          "funcao": "Vocal"
+        },
+        {
+          "nome": "SÉRGIO",
+          "funcao": "Músico"
+        },
+        {
+          "nome": "PIETRO",
+          "funcao": "Músico"
+        }
+      ],
+      "louvoresHash": ""
+    }
+  },
+  "solicitacoes": {
+    "sol_teste_933309": {
+      "status": "APROVADA",
+      "quemPediu": "Maria",
+      "substituto": "João",
+      "dataEscala": "19/08/2026"
+    },
+    "sol-16082026-JADSON-ANIZA-0": {
+      "status": "RECUSADA",
+      "quemPediu": "JADSON",
+      "substituto": "ANIZA",
+      "dataEscala": "16/08/2026"
+    },
+    "sol-16082026-JADSON-THAIS-1": {
+      "status": "APROVADA",
+      "quemPediu": "JADSON",
+      "substituto": "THAIS",
+      "dataEscala": "16/08/2026"
+    },
+    "sol-25082026-JADSON-RODRIGO-2": {
+      "status": "RECUSADA",
+      "quemPediu": "JADSON",
+      "substituto": "RODRIGO",
+      "dataEscala": "25/08/2026"
+    },
+    "sol-30082026-JADSON-JACÓ-3": {
+      "status": "APROVADA",
+      "quemPediu": "JADSON",
+      "substituto": "JACÓ",
+      "dataEscala": "30/08/2026"
+    },
+    "sol-01092026-JADSON-ANIZA-4": {
+      "status": "APROVADA",
+      "quemPediu": "JADSON",
+      "substituto": "ANIZA",
+      "dataEscala": "01/09/2026"
+    },
+    "sol-25082026-JADSON-CARIVALDO-5": {
+      "status": "PENDENTE",
+      "quemPediu": "JADSON",
+      "substituto": "CARIVALDO",
+      "dataEscala": "25/08/2026"
+    }
+  },
+  "recados": {}
+}
