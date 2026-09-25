@@ -29,7 +29,7 @@ async function startServer() {
   // VITE MIDDLEWARE (DEV) & STATIC FILES (PROD)
   // =========================================================================
 
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV === "development") {
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
