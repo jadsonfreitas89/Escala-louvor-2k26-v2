@@ -1,6 +1,6 @@
 {
   "initialized": true,
-  "timestamp": "2026-09-25T18:54:07.774Z",
+  "timestamp": "2026-09-25T19:53:07.119Z",
   "escalas": {
     "19/08/2026": {
       "data": "19/08/2026",
@@ -1102,10 +1102,16 @@
       "dataEscala": "01/09/2026"
     },
     "sol-25082026-JADSON-CARIVALDO-5": {
-      "status": "PENDENTE",
+      "status": "RECUSADA",
       "quemPediu": "JADSON",
       "substituto": "CARIVALDO",
       "dataEscala": "25/08/2026"
+    },
+    "sol-01092026-JADSON-ANIZA-6": {
+      "status": "APROVADA",
+      "quemPediu": "JADSON",
+      "substituto": "ANIZA",
+      "dataEscala": "01/09/2026"
     }
   },
   "recados": {

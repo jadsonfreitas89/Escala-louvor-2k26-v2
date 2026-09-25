@@ -1,5 +1,29 @@
 [
   {
+    "id": "0205db77-f14b-49be-8df8-8e858832e9fe",
+    "destinatario": "CARIVALDO",
+    "titulo": "Solicitação Não Aprovada",
+    "mensagem": "A Paz CARIVALDO! Sem alteração na escala!",
+    "tipo": "SOLICITACAO_RECUSADA",
+    "data": "2026-09-25T19:47:16.609Z",
+    "dataHora": "2026-09-25T19:47:16.609Z",
+    "lida": "NAO",
+    "eventoId": "SOLICITACAO_sol-25082026-JADSON-CARIVALDO-5_RECUSADA_SUBSTITUTO",
+    "origem": "GOOGLE_SHEETS"
+  },
+  {
+    "id": "9a5bc4c7-054c-4436-9aab-797e192e1fd3",
+    "destinatario": "JADSON",
+    "titulo": "Solicitação Recusada",
+    "mensagem": "A Paz JADSON! Solicitação NÃO aprovada!",
+    "tipo": "SOLICITACAO_RECUSADA",
+    "data": "2026-09-25T19:47:16.604Z",
+    "dataHora": "2026-09-25T19:47:16.604Z",
+    "lida": "NAO",
+    "eventoId": "SOLICITACAO_sol-25082026-JADSON-CARIVALDO-5_RECUSADA_SOLICITANTE",
+    "origem": "GOOGLE_SHEETS"
+  },
+  {
     "id": "15e77f82-8452-4147-9aa5-676419bc3d51",
     "destinatario": "MAISA",
     "titulo": "Lembrete de Culto",
@@ -451,7 +475,7 @@
     "tipo": "NOVO_RECADO",
     "data": "2026-09-25T18:49:27.796Z",
     "dataHora": "2026-09-25T18:49:27.796Z",
-    "lida": "NAO",
+    "lida": "SIM",
     "eventoId": "NOVO_RECADO_c411caec-d891-49ee-a593-c30028064b6a",
     "origem": "GOOGLE_SHEETS"
   },
@@ -3547,7 +3571,7 @@
     "tipo": "LOUVORES_UNIFORMES",
     "data": "2026-08-19T14:16:29.540Z",
     "dataHora": "2026-08-19T14:16:29.540Z",
-    "lida": "NAO",
+    "lida": "SIM",
     "eventoId": "LOUVORES_UNIFORMES_20_08_2026_Ve795c625",
     "origem": "GOOGLE_SHEETS"
   },

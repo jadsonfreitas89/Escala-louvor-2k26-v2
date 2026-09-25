@@ -12,9 +12,7 @@ export default defineConfig(() => {
       },
     },
     server: {
-      hmr: process.env.DISABLE_HMR === 'true'
-        ? false
-        : { protocol: 'wss', clientPort: 443 },
+      allowedHosts: ['.v0.build'],
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     build: {
