@@ -215,7 +215,7 @@ export function getSheetsSnapshot(): SheetsSnapshot {
 }
 
 // Inicializa na importação
-loadNotifications();
+// loadNotifications();
 
 /**
  * Normaliza nomes para correspondência resiliente (sem acentos e minúsculo)
