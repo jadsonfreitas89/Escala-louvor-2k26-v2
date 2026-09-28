@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Escala, Integrante, LouvorItem } from '../../types';
 import { apiService } from '../../services/api';
+import { youtubeService } from '../../services/youtubeService';
 import {
   getTituloCulto,
   getDiaSemanaExtenso,
@@ -104,6 +105,32 @@ export const EditEscalaModal: React.FC<EditEscalaModalProps> = ({
   const [inputUrlError, setInputUrlError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isFetchingVideoMeta, setIsFetchingVideoMeta] = useState(false);
+
+  const handleYoutubeUrlChange = async (url: string) => {
+    setSongYoutubeInput(url);
+    if (inputUrlError) setInputUrlError(null);
+
+    const trimmed = url.trim();
+    if (!trimmed) return;
+
+    const videoId = getYouTubeId(trimmed);
+    if (!videoId) return;
+
+    setIsFetchingVideoMeta(true);
+    try {
+      const res = await youtubeService.fetchVideo(trimmed);
+      if (res.sucesso && res.data) {
+        if (!songNameInput.trim() && res.data.title) {
+          setSongNameInput(res.data.title);
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao buscar dados do vídeo:', err);
+    } finally {
+      setIsFetchingVideoMeta(false);
+    }
+  };
 
   // Parse existing vocal, musicos and louvores on mount
   useEffect(() => {
@@ -825,8 +852,7 @@ export const EditEscalaModal: React.FC<EditEscalaModalProps> = ({
                         type="url"
                         value={songYoutubeInput}
                         onChange={(e) => {
-                          setSongYoutubeInput(e.target.value);
-                          if (inputUrlError) setInputUrlError(null);
+                          handleYoutubeUrlChange(e.target.value);
                         }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
@@ -836,7 +862,7 @@ export const EditEscalaModal: React.FC<EditEscalaModalProps> = ({
                         }}
                         placeholder="Ex: https://www.youtube.com/watch?v=... ou https://youtu.be/..."
                         disabled={isLoading}
-                        className={`w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border text-zinc-100 text-xs font-mono transition-all pr-24 ${
+                        className={`w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border text-zinc-100 text-xs font-mono transition-all pr-28 ${
                           songYoutubeInput.trim().length > 0
                             ? isCurrentUrlValid
                               ? 'border-emerald-500/60 focus:border-emerald-500'
@@ -844,7 +870,12 @@ export const EditEscalaModal: React.FC<EditEscalaModalProps> = ({
                             : 'border-zinc-800 focus:border-orange-500'
                         }`}
                       />
-                      {songYoutubeInput.trim().length > 0 && isCurrentUrlValid && (
+                      {isFetchingVideoMeta && (
+                        <span className="absolute right-2.5 flex items-center gap-1 text-[10px] font-bold text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-lg border border-orange-500/20 animate-pulse">
+                          Buscando...
+                        </span>
+                      )}
+                      {!isFetchingVideoMeta && songYoutubeInput.trim().length > 0 && isCurrentUrlValid && (
                         <span className="absolute right-2.5 flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
                           <Check className="w-3 h-3" /> Válido
                         </span>

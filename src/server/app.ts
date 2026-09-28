@@ -27,7 +27,7 @@ import {
   IntegranteRef
 } from "./notifications";
 import { executarBateriaDeTestesDetector } from "./tests";
-import { extractPlaylistId, fetchYouTubePlaylist } from "./youtube";
+import { extractPlaylistId, fetchYouTubePlaylist, fetchYouTubeVideo } from "./youtube";
 
 /**
  * URL do Web App do Google Apps Script (Execução Oficial)
@@ -778,6 +778,48 @@ export function createApiApp(): Express {
 
   app.post("/api/youtube/playlist", authenticateToken, handleFetchYouTubePlaylist);
   app.get("/api/youtube/playlist", authenticateToken, handleFetchYouTubePlaylist);
+
+  /**
+   * POST /api/youtube/video
+   * Importa dados de um vídeo individual do YouTube de forma segura no backend
+   */
+  const handleFetchYouTubeVideo = async (req: Request, res: Response) => {
+    try {
+      const url = (req.body?.url || req.body?.videoUrl || req.body?.videoId || "").toString().trim();
+
+      if (!url) {
+        res.status(400).json({
+          sucesso: false,
+          mensagem: "O link ou ID do vídeo do YouTube é obrigatório."
+        });
+        return;
+      }
+
+      const result = await fetchYouTubeVideo(url);
+
+      if (!result.success || !result.data) {
+        res.status(result.statusCode || 500).json({
+          sucesso: false,
+          mensagem: result.errorMessage || "Não foi possível importar o vídeo no momento. Tente novamente."
+        });
+        return;
+      }
+
+      res.json({
+        sucesso: true,
+        dados: result.data,
+        data: result.data
+      });
+    } catch (err: any) {
+      console.error("[Backend] Erro na rota /api/youtube/video:", err);
+      res.status(500).json({
+        sucesso: false,
+        mensagem: "Não foi possível importar o vídeo no momento. Tente novamente."
+      });
+    }
+  };
+
+  app.post("/api/youtube/video", authenticateToken, handleFetchYouTubeVideo);
 
   // =========================================================================
   // ROTAS DE DADOS DA ESCALA E PLANILHA (Backend Proxy Seguro)

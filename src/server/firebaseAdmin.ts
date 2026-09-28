@@ -28,15 +28,14 @@ export function getFirebaseAdminApp(): App | null {
     try {
       serviceAccount = JSON.parse(serviceAccountString);
     } catch (jsonErr) {
-      // Handle case where user pasted JS assignment like `var admin = { ... }` or `const serviceAccount = { ... }`
-      const cleaned = serviceAccountString
-        .replace(/^(var|const|let)\s+[\w$]+\s*=\s*/, '')
-        .replace(/;?\s*$/, '');
-      try {
-        serviceAccount = JSON.parse(cleaned);
-      } catch (e2) {
-        const fn = new Function(`return ${cleaned}`);
-        serviceAccount = fn();
+      // Extract everything between the first '{' and the last '}' to handle assignments or wrapper text safely
+      const firstBrace = serviceAccountString.indexOf('{');
+      const lastBrace = serviceAccountString.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        const jsonPart = serviceAccountString.substring(firstBrace, lastBrace + 1);
+        serviceAccount = JSON.parse(jsonPart);
+      } else {
+        throw jsonErr;
       }
     }
 

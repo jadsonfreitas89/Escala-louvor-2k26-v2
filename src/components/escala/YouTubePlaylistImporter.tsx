@@ -68,9 +68,14 @@ export const YouTubePlaylistImporter: React.FC<YouTubePlaylistImporterProps> = (
       return;
     }
 
+    if ((trimmed.includes('watch?v=') || trimmed.includes('youtu.be/') || trimmed.includes('/shorts/')) && !trimmed.includes('list=')) {
+      setErrorMessage('O link informado é de um vídeo individual e não de uma playlist. Utilize o campo de link do louvor para vídeos individuais.');
+      return;
+    }
+
     const playlistId = youtubeService.extractPlaylistId(trimmed);
     if (!playlistId) {
-      setErrorMessage('O link informado não parece ser uma playlist válida do YouTube.');
+      setErrorMessage('O link informado não parece ser uma playlist válida do YouTube. Verifique se a URL contém o parâmetro ?list=');
       return;
     }
 

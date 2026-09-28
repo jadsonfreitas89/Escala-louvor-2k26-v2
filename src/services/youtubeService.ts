@@ -48,7 +48,7 @@ class YouTubeService {
     if (!cleanId) {
       return {
         sucesso: false,
-        mensagem: 'O link informado não parece ser uma playlist válida do YouTube.'
+        mensagem: 'O link informado não parece ser uma playlist válida do YouTube. Verifique se a URL contém o parâmetro ?list='
       };
     }
 
@@ -95,6 +95,74 @@ class YouTubeService {
       return {
         sucesso: false,
         mensagem: 'Não foi possível importar a playlist no momento. Tente novamente.'
+      };
+    }
+  }
+
+  public async fetchVideo(urlOrId: string): Promise<{
+    sucesso: boolean;
+    mensagem?: string;
+    data?: {
+      videoId: string;
+      title: string;
+      thumbnail: string;
+      url: string;
+    };
+  }> {
+    const trimmed = (urlOrId || '').trim();
+    if (!trimmed) {
+      return {
+        sucesso: false,
+        mensagem: 'O link ou ID do vídeo do YouTube é obrigatório.'
+      };
+    }
+
+    const token = apiService.getToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await fetch('/api/youtube/video', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          url: trimmed
+        })
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data || !data.sucesso) {
+        let msg = data?.mensagem;
+        if (!msg) {
+          if (response.status === 404) {
+            msg = 'Vídeo não encontrado no YouTube.';
+          } else if (response.status === 400) {
+            msg = 'URL inválida. Utilize links como youtube.com/watch?v=..., youtu.be/... ou youtube.com/shorts/...';
+          } else {
+            msg = 'Não foi possível importar o vídeo no momento. Tente novamente.';
+          }
+        }
+        return {
+          sucesso: false,
+          mensagem: msg
+        };
+      }
+
+      return {
+        sucesso: true,
+        data: data.data || data.dados
+      };
+    } catch (err: any) {
+      console.error('[YouTubeService] Erro ao comunicar com o servidor para buscar vídeo:', err);
+      return {
+        sucesso: false,
+        mensagem: 'Não foi possível importar o vídeo no momento. Tente novamente.'
       };
     }
   }

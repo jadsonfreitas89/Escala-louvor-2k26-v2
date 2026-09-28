@@ -63,7 +63,7 @@ export async function fetchYouTubePlaylist(
     return {
       success: false,
       statusCode: 503,
-      errorMessage: "Não foi possível importar a playlist no momento. Tente novamente."
+      errorMessage: "Configuração do servidor ausente: YOUTUBE_API_KEY não configurada."
     };
   }
 
@@ -197,6 +197,177 @@ export async function fetchYouTubePlaylist(
       success: false,
       statusCode: 500,
       errorMessage: "Não foi possível importar a playlist no momento. Tente novamente."
+    };
+  }
+}
+
+export function extractVideoId(input: string): string | null {
+  if (!input || typeof input !== "string") return null;
+  const trimmed = input.trim();
+
+  // Caso 1: ID direto de 11 caracteres
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  try {
+    const fullUrl = trimmed.startsWith("http://") || trimmed.startsWith("https://") ? trimmed : `https://${trimmed}`;
+    const parsed = new URL(fullUrl);
+    const host = parsed.hostname.toLowerCase();
+
+    if (host.includes("youtu.be")) {
+      const id = parsed.pathname.replace(/^\//, "").split(/[\/\?\#]/)[0];
+      if (/^[a-zA-Z0-9_-]{11}$/.test(id)) return id;
+    }
+
+    if (host.includes("youtube.com")) {
+      const v = parsed.searchParams.get("v");
+      if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
+
+      const pathParts = parsed.pathname.split("/").filter(Boolean);
+      if (pathParts[0] === "shorts" && pathParts[1] && /^[a-zA-Z0-9_-]{11}$/.test(pathParts[1])) {
+        return pathParts[1];
+      }
+      if (pathParts[0] === "embed" && pathParts[1] && /^[a-zA-Z0-9_-]{11}$/.test(pathParts[1])) {
+        return pathParts[1];
+      }
+      if (pathParts[0] === "v" && pathParts[1] && /^[a-zA-Z0-9_-]{11}$/.test(pathParts[1])) {
+        return pathParts[1];
+      }
+    }
+  } catch (e) {
+    // Falha ao parsear URL
+  }
+
+  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/i;
+  const match = trimmed.match(regExp);
+  if (match && match[1]) {
+    return match[1];
+  }
+
+  return null;
+}
+
+export interface FetchVideoResult {
+  success: boolean;
+  statusCode?: number;
+  errorMessage?: string;
+  data?: {
+    videoId: string;
+    title: string;
+    thumbnail: string;
+    url: string;
+  };
+}
+
+export async function fetchYouTubeVideo(
+  videoUrlOrId: string,
+  apiKey?: string
+): Promise<FetchVideoResult> {
+  const trimmed = (videoUrlOrId || "").trim();
+  if (!trimmed) {
+    return {
+      success: false,
+      statusCode: 400,
+      errorMessage: "O link ou ID do vídeo do YouTube é obrigatório."
+    };
+  }
+
+  const videoId = extractVideoId(trimmed);
+  if (!videoId) {
+    return {
+      success: false,
+      statusCode: 400,
+      errorMessage: "URL inválida. Utilize links como youtube.com/watch?v=..., youtu.be/... ou youtube.com/shorts/..."
+    };
+  }
+
+  const key = apiKey || process.env.YOUTUBE_API_KEY || "";
+  if (!key) {
+    console.warn("[YouTube API] Variável de ambiente YOUTUBE_API_KEY não configurada no backend.");
+    return {
+      success: false,
+      statusCode: 503,
+      errorMessage: "Configuração do servidor ausente: YOUTUBE_API_KEY não configurada."
+    };
+  }
+
+  try {
+    const videoApiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${encodeURIComponent(
+      videoId
+    )}&key=${encodeURIComponent(key)}`;
+
+    const res = await fetch(videoApiUrl, {
+      method: "GET",
+      headers: { Accept: "application/json" }
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error(`[YouTube API] Erro ao buscar vídeo (${res.status}):`, errText);
+
+      if (res.status === 403) {
+        if (errText.toLowerCase().includes("quota") || errText.toLowerCase().includes("exceeded")) {
+          return {
+            success: false,
+            statusCode: 429,
+            errorMessage: "A cota da API do YouTube foi excedida. Tente novamente mais tarde."
+          };
+        }
+        return {
+          success: false,
+          statusCode: 403,
+          errorMessage: "Erro de configuração da API do YouTube (chave inválida ou acesso negado)."
+        };
+      }
+
+      if (res.status === 404) {
+        return {
+          success: false,
+          statusCode: 404,
+          errorMessage: "Vídeo não encontrado no YouTube."
+        };
+      }
+
+      return {
+        success: false,
+        statusCode: 502,
+        errorMessage: "Falha temporária ao comunicar com o YouTube. Tente novamente."
+      };
+    }
+
+    const json: any = await res.json();
+    if (!json.items || json.items.length === 0) {
+      return {
+        success: false,
+        statusCode: 404,
+        errorMessage: "Vídeo não encontrado no YouTube."
+      };
+    }
+
+    const snippet = json.items[0].snippet || {};
+    const title = (snippet.title || "Louvor sem título").trim();
+    const thumbnail =
+      snippet.thumbnails?.high?.url ||
+      snippet.thumbnails?.medium?.url ||
+      snippet.thumbnails?.default?.url ||
+      `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+
+    return {
+      success: true,
+      data: {
+        videoId,
+        title,
+        thumbnail,
+        url: `https://www.youtube.com/watch?v=${videoId}`
+      }
+    };
+  } catch (err: any) {
+    console.error("[YouTube API] Exceção ao buscar vídeo:", err);
+    return {
+      success: false,
+      statusCode: 500,
+      errorMessage: "Falha temporária ao comunicar com o YouTube. Tente novamente."
     };
   }
 }
