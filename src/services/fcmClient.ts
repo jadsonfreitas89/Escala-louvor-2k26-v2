@@ -33,7 +33,30 @@ export const getFcmToken = async (): Promise<string | null> => {
     }
 
     const registration = await navigator.serviceWorker.ready;
-    console.log("FCM DEBUG - Service Worker pronto.");
+    console.log("FCM DEBUG - Service Worker pronto.", {
+      scope: registration.scope,
+      active: !!registration.active,
+      installing: !!registration.installing,
+      waiting: !!registration.waiting
+    });
+
+    if (!registration.active) {
+      await new Promise<void>((resolve) => {
+        if (registration.active) {
+          resolve();
+        } else if (registration.installing) {
+          registration.installing.addEventListener('statechange', (e: any) => {
+            if (e.target.state === 'activated') resolve();
+          });
+        } else if (registration.waiting) {
+          registration.waiting.addEventListener('statechange', (e: any) => {
+            if (e.target.state === 'activated') resolve();
+          });
+        } else {
+          setTimeout(resolve, 1000);
+        }
+      });
+    }
 
     const token = await getToken(messaging, {
       vapidKey,
@@ -53,10 +76,11 @@ export const getFcmToken = async (): Promise<string | null> => {
       code: error?.code,
       status: error?.status,
       message: error?.message,
+      stack: error?.stack
     });
 
-    if (error?.status === 400 || error?.code === 'messaging/invalid-argument') {
-      console.error("FCM DIAGNOSTIC - Erro de configuração ou API (HTTP 400). Verifique VITE_FIREBASE_API_KEY, VITE_FIREBASE_VAPID_KEY e AppID.");
+    if (error?.status === 400 || error?.code === 'messaging/invalid-argument' || error?.name === 'AbortError') {
+      console.error("FCM DIAGNOSTIC - Falha no Push Service ou VAPID Key inválida. Certifique-se de que VITE_FIREBASE_VAPID_KEY está configurada corretamente no painel da Vercel correspondendo ao certificado Web Push do Firebase Console.");
     }
 
     return null;
