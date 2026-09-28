@@ -58,6 +58,35 @@ export const getFcmToken = async (): Promise<string | null> => {
       });
     }
 
+    // Isolated test for pushManager.subscribe with Base64URL conversion
+    try {
+      const urlBase64ToUint8Array = (base64String: string) => {
+        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+        const base64 = (base64String + padding)
+          .replace(/\-/g, '+')
+          .replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+      };
+
+      const convertedKey = urlBase64ToUint8Array(vapidKey);
+      await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedKey
+      });
+      console.log("PUSHMANAGER TEST: SUCCESS");
+    } catch (subErr: any) {
+      console.error("PUSHMANAGER TEST ERROR:", {
+        name: subErr?.name,
+        code: subErr?.code,
+        message: subErr?.message
+      });
+    }
+
     const token = await getToken(messaging, {
       vapidKey,
       serviceWorkerRegistration: registration
