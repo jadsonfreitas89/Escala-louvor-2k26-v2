@@ -33,11 +33,23 @@ export const getFcmToken = async (): Promise<string | null> => {
     }
 
     const registration = await navigator.serviceWorker.ready;
-    console.log("FCM DEBUG - Service Worker pronto.", {
-      scope: registration.scope,
-      active: !!registration.active,
-      installing: !!registration.installing,
-      waiting: !!registration.waiting
+    const existingSubscription = await registration.pushManager.getSubscription();
+
+    const maskedEndpoint = existingSubscription 
+      ? existingSubscription.endpoint.replace(/https:\/\/([^/]+)\/.*/, 'https://$1/... [masked]') 
+      : null;
+
+    console.log("PUSH ENV DIAGNOSTIC:", {
+      hasSubscription: !!existingSubscription,
+      endpointMasked: maskedEndpoint,
+      hasActiveWorker: !!registration.active,
+      swScope: registration.scope,
+      isSecureContext: typeof window !== 'undefined' ? window.isSecureContext : false,
+      notificationPermission: typeof Notification !== 'undefined' ? Notification.permission : 'unknown',
+      swSupported: typeof navigator !== 'undefined' && 'serviceWorker' in navigator,
+      pushManagerSupported: typeof window !== 'undefined' && 'PushManager' in window,
+      notificationSupported: typeof window !== 'undefined' && 'Notification' in window,
+      hasController: typeof navigator !== 'undefined' && !!navigator.serviceWorker.controller
     });
 
     if (!registration.active) {
@@ -58,7 +70,7 @@ export const getFcmToken = async (): Promise<string | null> => {
       });
     }
 
-    // Isolated test for pushManager.subscribe with Base64URL conversion
+    // Isolated independent test for pushManager.subscribe without Firebase
     try {
       const urlBase64ToUint8Array = (base64String: string) => {
         const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -78,9 +90,9 @@ export const getFcmToken = async (): Promise<string | null> => {
         userVisibleOnly: true,
         applicationServerKey: convertedKey
       });
-      console.log("PUSHMANAGER TEST: SUCCESS");
+      console.log("PUSH SUBSCRIBE TEST: SUCCESS");
     } catch (subErr: any) {
-      console.error("PUSHMANAGER TEST ERROR:", {
+      console.error("PUSH SUBSCRIBE TEST ERROR:", {
         name: subErr?.name,
         code: subErr?.code,
         message: subErr?.message
