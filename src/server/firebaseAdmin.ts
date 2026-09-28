@@ -24,7 +24,21 @@ export function getFirebaseAdminApp(): App | null {
   }
 
   try {
-    const serviceAccount = JSON.parse(serviceAccountString);
+    let serviceAccount;
+    try {
+      serviceAccount = JSON.parse(serviceAccountString);
+    } catch (jsonErr) {
+      // Handle case where user pasted JS assignment like `var admin = { ... }` or `const serviceAccount = { ... }`
+      const cleaned = serviceAccountString
+        .replace(/^(var|const|let)\s+[\w$]+\s*=\s*/, '')
+        .replace(/;?\s*$/, '');
+      try {
+        serviceAccount = JSON.parse(cleaned);
+      } catch (e2) {
+        const fn = new Function(`return ${cleaned}`);
+        serviceAccount = fn();
+      }
+    }
 
     adminApp = initializeApp({
       credential: cert(serviceAccount),
