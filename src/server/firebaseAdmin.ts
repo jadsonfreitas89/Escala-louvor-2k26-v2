@@ -16,10 +16,9 @@ export function getFirebaseAdminApp(): App | null {
     return adminApp;
   }
 
-  const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  const serviceAccountString = (process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '').trim();
 
-  if (!serviceAccountString) {
-    console.warn('[Firebase Admin] Variável FIREBASE_SERVICE_ACCOUNT_JSON não configurada.');
+  if (!serviceAccountString || serviceAccountString === '{}' || serviceAccountString.toLowerCase().includes('your_service_account') || serviceAccountString.toLowerCase().includes('cole_aqui')) {
     return null;
   }
 
@@ -28,15 +27,18 @@ export function getFirebaseAdminApp(): App | null {
     try {
       serviceAccount = JSON.parse(serviceAccountString);
     } catch (jsonErr) {
-      // Extract everything between the first '{' and the last '}' to handle assignments or wrapper text safely
       const firstBrace = serviceAccountString.indexOf('{');
       const lastBrace = serviceAccountString.lastIndexOf('}');
       if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
         const jsonPart = serviceAccountString.substring(firstBrace, lastBrace + 1);
         serviceAccount = JSON.parse(jsonPart);
       } else {
-        throw jsonErr;
+        return null;
       }
+    }
+
+    if (!serviceAccount || typeof serviceAccount !== 'object' || !serviceAccount.private_key) {
+      return null;
     }
 
     adminApp = initializeApp({
