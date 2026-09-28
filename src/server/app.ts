@@ -450,8 +450,8 @@ function requireDirigenteOuLider(req: Request, res: Response, next: NextFunction
 export function createApiApp(): Express {
   const app = express();
 
-  // Inicia o motor de lembretes e checagem de cultos em segundo plano
-  startCultoScheduler();
+  // Inicia o motor de lembretes e checagem de cultos em segundo plano (desativado na Vercel para evitar setInterval e fetch síncrono em serverless)
+  // startCultoScheduler();
 
   // Permite payloads de até 15MB (suporte a fotos e recados)
   app.use(express.json({ limit: "15mb" }));
