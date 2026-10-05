@@ -22,6 +22,19 @@ app.get("/sw.js", (req, res, next) => {
   next();
 });
 
+// Rotas explícitas de ícones PWA e Web Push
+app.get(["/icon-192.png", "/icons/icon-192.png"], (req, res) => {
+  res.setHeader("Content-Type", "image/png");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.sendFile(path.join(process.cwd(), "public", "icons", "icon-192.png"));
+});
+
+app.get(["/icon-512.png", "/icons/icon-512.png"], (req, res) => {
+  res.setHeader("Content-Type", "image/png");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.sendFile(path.join(process.cwd(), "public", "icons", "icon-512.png"));
+});
+
 async function setupServer() {
   const PORT = 3000;
   const httpServer = createServer(app);

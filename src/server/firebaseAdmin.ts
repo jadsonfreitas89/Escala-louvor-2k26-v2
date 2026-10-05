@@ -18,7 +18,17 @@ export function getFirebaseAdminApp(): App | null {
 
   const serviceAccountString = (process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '').trim();
 
-  if (!serviceAccountString || serviceAccountString === '{}' || serviceAccountString.toLowerCase().includes('your_service_account') || serviceAccountString.toLowerCase().includes('cole_aqui')) {
+  if (
+    !serviceAccountString ||
+    serviceAccountString === '{}' ||
+    serviceAccountString.toLowerCase().includes('your_service_account') ||
+    serviceAccountString.toLowerCase().includes('cole_aqui') ||
+    serviceAccountString.startsWith('var admin') ||
+    serviceAccountString.includes('require(')
+  ) {
+    if (serviceAccountString.startsWith('var admin') || serviceAccountString.includes('require(')) {
+      console.warn('[Firebase Admin] AVISO: A variável FIREBASE_SERVICE_ACCOUNT_JSON contém o trecho de código JavaScript de exemplo do Firebase Console em vez do conteúdo do arquivo JSON de credenciais.');
+    }
     return null;
   }
 
