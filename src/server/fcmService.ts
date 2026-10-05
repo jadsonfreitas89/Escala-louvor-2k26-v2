@@ -91,13 +91,19 @@ export interface FcmPayloadOptions {
 }
 
 export async function sendFcmPushToUser(userId: string, options: FcmPayloadOptions): Promise<{ sent: number; failed: number }> {
+  console.log(`[FCM] Preparing notification for user: ${userId}, title: "${options.title}"`);
+
   const adminApp = getFirebaseAdminApp();
   if (!adminApp) {
+    console.warn("[FCM] Firebase Admin SDK não disponível. Notificação push ignorada.");
     return { sent: 0, failed: 0 };
   }
 
   const tokens = await getFcmTokensForUser(userId);
+  console.log(`[FCM] User ${userId} - Tokens found: ${tokens.length}`);
+
   if (!tokens || tokens.length === 0) {
+    console.log(`[FCM] Nenhum token FCM ativo para o usuário ${userId}.`);
     return { sent: 0, failed: 0 };
   }
 
@@ -110,7 +116,8 @@ export async function sendFcmPushToUser(userId: string, options: FcmPayloadOptio
 
   for (const token of tokens) {
     try {
-      await messaging.send({
+      console.log(`[FCM] Sending message to token ${token.substring(0, 6)}...`);
+      const response = await messaging.send({
         token,
         notification: {
           title: options.title,
@@ -127,20 +134,22 @@ export async function sendFcmPushToUser(userId: string, options: FcmPayloadOptio
             link: targetUrl
           },
           notification: {
-            icon: "/icon-192.png",
-            badge: "/icon-192.png",
+            icon: "/icons/icon-192.png",
+            badge: "/icons/icon-192.png",
             tag: notificationId,
             requireInteraction: false
           }
         }
       });
+      console.log(`[FCM] Firebase response: message sent successfully (${response})`);
       sent++;
     } catch (error: any) {
-      console.error(`[FCM] Erro ao enviar para token ${token.substring(0, 6)}...:`, error?.message);
+      console.error(`[FCM] Send failed for token ${token.substring(0, 6)}...:`, error?.message);
       if (
         error.code === 'messaging/registration-token-not-registered' ||
         error.code === 'messaging/invalid-registration-token'
       ) {
+        console.log(`[FCM] Desativando token inválido/expirado ${token.substring(0, 6)}...`);
         await unsubscribeUserFromFcm(userId, token);
       }
       failed++;

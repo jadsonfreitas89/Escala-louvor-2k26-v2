@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
+import { apiService } from '../services/api';
 import { NotificacaoCard } from '../components/notificacoes/NotificacaoCard';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -98,6 +99,22 @@ export const NotificacoesPage: React.FC = () => {
     }
   };
 
+  const [isTestingPush, setIsTestingPush] = useState<boolean>(false);
+
+  const handleTestPush = async () => {
+    setIsTestingPush(true);
+    try {
+      const res = await apiService.testFcm();
+      setFeedback(res.mensagem || (res.sucesso ? 'Push de teste enviado com sucesso!' : 'Falha ao enviar push de teste.'));
+      setTimeout(() => setFeedback(null), 4500);
+    } catch {
+      setFeedback('Erro ao disparar teste de notificação push.');
+      setTimeout(() => setFeedback(null), 4500);
+    } finally {
+      setIsTestingPush(false);
+    }
+  };
+
   const handleEnableBrowserNotifications = async () => {
     const granted = await requestBrowserPermission();
     if (granted) {
@@ -127,7 +144,22 @@ export const NotificacoesPage: React.FC = () => {
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          {browserPermission === 'granted' && (
+            <Button
+              id="btn-testar-push-fcm"
+              variant="outline"
+              size="sm"
+              onClick={handleTestPush}
+              isLoading={isTestingPush}
+              leftIcon={<Bell size={13} className="text-amber-400" />}
+              className="text-xs"
+              title="Dispara um push de teste real via Firebase para este dispositivo"
+            >
+              Testar Push
+            </Button>
+          )}
+
           {unreadCount > 0 && (
             <Button
               id="btn-marcar-todas-lidas"
@@ -138,7 +170,7 @@ export const NotificacoesPage: React.FC = () => {
               leftIcon={<CheckCheck size={14} className="text-emerald-400" />}
               className="text-xs"
             >
-              Marcar todas como lidas
+              Marcar lidas
             </Button>
           )}
 

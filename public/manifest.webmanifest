@@ -1,5 +1,6 @@
 {
   "id": "/",
+  "gcm_sender_id": "103953800507",
   "name": "Escala de Louvor",
   "short_name": "Escala Louvor",
   "description": "Sistema de gestão de escalas de louvor, integrantes e comunicados.",

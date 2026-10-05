@@ -936,6 +936,13 @@ export function processarLembretesDeCulto(
 
     if (notif) {
       totalCriadas++;
+      sendFcmPushToUser(integrante.nome, {
+        title: notif.titulo,
+        body: notif.mensagem,
+        id: notif.id,
+        eventoId: notif.eventoId,
+        type: notif.tipo
+      }).catch((err) => console.error("[FCM] Erro ao disparar push de culto:", err));
     }
   }
 
@@ -1123,7 +1130,16 @@ export function processarNotificacaoNovaSolicitacao(params: {
       eventoId,
       origem
     });
-    if (n) count++;
+    if (n) {
+      count++;
+      sendFcmPushToUser(lider.nome, {
+        title: n.titulo,
+        body: n.mensagem,
+        id: n.id,
+        eventoId: n.eventoId,
+        type: n.tipo
+      }).catch(() => {});
+    }
   }
 
   return count;
@@ -1161,7 +1177,16 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
       eventoId: `SOLICITACAO_${safeId}_APROVADA_SOLICITANTE`,
       origem
     });
-    if (n1) count++;
+    if (n1) {
+      count++;
+      sendFcmPushToUser(quemPediu, {
+        title: n1.titulo,
+        body: n1.mensagem,
+        id: n1.id,
+        eventoId: n1.eventoId,
+        type: n1.tipo
+      }).catch(() => {});
+    }
 
     // Substituto
     if (substituto) {
@@ -1173,7 +1198,16 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
         eventoId: `SOLICITACAO_${safeId}_APROVADA_SUBSTITUTO`,
         origem
       });
-      if (n2) count++;
+      if (n2) {
+        count++;
+        sendFcmPushToUser(substituto, {
+          title: n2.titulo,
+          body: n2.mensagem,
+          id: n2.id,
+          eventoId: n2.eventoId,
+          type: n2.tipo
+        }).catch(() => {});
+      }
     }
 
     logChangeDetector({
@@ -1197,7 +1231,16 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
       eventoId: `SOLICITACAO_${safeId}_RECUSADA_SOLICITANTE`,
       origem
     });
-    if (n1) count++;
+    if (n1) {
+      count++;
+      sendFcmPushToUser(quemPediu, {
+        title: n1.titulo,
+        body: n1.mensagem,
+        id: n1.id,
+        eventoId: n1.eventoId,
+        type: n1.tipo
+      }).catch(() => {});
+    }
 
     // Substituto
     if (substituto) {
@@ -1209,7 +1252,16 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
         eventoId: `SOLICITACAO_${safeId}_RECUSADA_SUBSTITUTO`,
         origem
       });
-      if (n2) count++;
+      if (n2) {
+        count++;
+        sendFcmPushToUser(substituto, {
+          title: n2.titulo,
+          body: n2.mensagem,
+          id: n2.id,
+          eventoId: n2.eventoId,
+          type: n2.tipo
+        }).catch(() => {});
+      }
     }
 
     logChangeDetector({
@@ -1296,6 +1348,13 @@ export function processarNotificacaoLouvoresUniformes(params: {
     if (n) {
       count++;
       destinatariosNotificados.push(nomeDest);
+      sendFcmPushToUser(nomeDest, {
+        title: n.titulo,
+        body: n.mensagem,
+        id: n.id,
+        eventoId: n.eventoId,
+        type: n.tipo
+      }).catch(() => {});
     }
   }
 
@@ -1616,6 +1675,13 @@ export function detectarAlteracoesNaPlanilha(params: {
           });
           if (n) {
             totalNotificacoes++;
+            sendFcmPushToUser(mNovo.nome, {
+              title: n.titulo,
+              body: n.mensagem,
+              id: n.id,
+              eventoId: n.eventoId,
+              type: n.tipo
+            }).catch(() => {});
             eventosDetectados.push(eventoId);
           }
         }

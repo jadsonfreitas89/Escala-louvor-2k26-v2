@@ -3,12 +3,14 @@ import { app } from "./firebase";
 
 const messaging = getMessaging(app);
 
+export const DEFAULT_VAPID_KEY = "BL9MKXSK-5GX-aWJXo_AaYQINA63NpRYxdkEatU3xw22bbMEehCUzCuCa-IL-zlhSXHmG6RgwfTvH78w0utrK0A";
+
 export const getVapidKey = (): string => {
   const envKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
   if (envKey && typeof envKey === 'string' && envKey.trim().length > 0) {
     return envKey.trim();
   }
-  throw new Error("VITE_FIREBASE_VAPID_KEY não está configurada nas variáveis de ambiente.");
+  return DEFAULT_VAPID_KEY;
 };
 
 export const requestNotificationPermission = async () => {
@@ -18,7 +20,7 @@ export const requestNotificationPermission = async () => {
       return await getFcmToken();
     }
   } catch (error) {
-    console.error("Error requesting permission or getting token:", error);
+    console.error("[FCM] Erro ao solicitar permissão ou obter token:", error);
   }
   return null;
 };
@@ -29,28 +31,11 @@ export const getFcmToken = async (): Promise<string | null> => {
     const swSupported = typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
 
     if (!swSupported) {
-      throw new Error('Service Worker não suportado pelo navegador.');
+      console.warn('[FCM] Service Worker não suportado pelo navegador.');
+      return null;
     }
 
     const registration = await navigator.serviceWorker.ready;
-    const existingSubscription = await registration.pushManager.getSubscription();
-
-    const maskedEndpoint = existingSubscription 
-      ? existingSubscription.endpoint.replace(/https:\/\/([^/]+)\/.*/, 'https://$1/... [masked]') 
-      : null;
-
-    console.log("PUSH ENV DIAGNOSTIC:", {
-      hasSubscription: !!existingSubscription,
-      endpointMasked: maskedEndpoint,
-      hasActiveWorker: !!registration.active,
-      swScope: registration.scope,
-      isSecureContext: typeof window !== 'undefined' ? window.isSecureContext : false,
-      notificationPermission: typeof Notification !== 'undefined' ? Notification.permission : 'unknown',
-      swSupported: typeof navigator !== 'undefined' && 'serviceWorker' in navigator,
-      pushManagerSupported: typeof window !== 'undefined' && 'PushManager' in window,
-      notificationSupported: typeof window !== 'undefined' && 'Notification' in window,
-      hasController: typeof navigator !== 'undefined' && !!navigator.serviceWorker.controller
-    });
 
     if (!registration.active) {
       await new Promise<void>((resolve) => {
@@ -65,65 +50,51 @@ export const getFcmToken = async (): Promise<string | null> => {
             if (e.target.state === 'activated') resolve();
           });
         } else {
-          setTimeout(resolve, 1000);
+          setTimeout(resolve, 800);
         }
       });
     }
 
-    // Isolated independent test for pushManager.subscribe without Firebase
+    let token: string | null = null;
     try {
-      const urlBase64ToUint8Array = (base64String: string) => {
-        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-        const base64 = (base64String + padding)
-          .replace(/\-/g, '+')
-          .replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-          outputArray[i] = rawData.charCodeAt(i);
+      token = await getToken(messaging, {
+        vapidKey,
+        serviceWorkerRegistration: registration
+      });
+    } catch (tokenErr: any) {
+      console.warn('[FCM] Primeira tentativa de getToken falhou:', tokenErr?.message || tokenErr?.name);
+      
+      // Se houver uma assinatura órfã corrompida de testes anteriores, desinscreve e tenta novamente
+      try {
+        const existingSub = await registration.pushManager.getSubscription();
+        if (existingSub) {
+          console.log('[FCM] Removendo assinatura push anterior corrompida para auto-recuperação...');
+          await existingSub.unsubscribe();
         }
-        return outputArray;
-      };
-
-      const convertedKey = urlBase64ToUint8Array(vapidKey);
-      await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: convertedKey
-      });
-      console.log("PUSH SUBSCRIBE TEST: SUCCESS");
-    } catch (subErr: any) {
-      console.error("PUSH SUBSCRIBE TEST ERROR:", {
-        name: subErr?.name,
-        code: subErr?.code,
-        message: subErr?.message
-      });
+        token = await getToken(messaging, {
+          vapidKey,
+          serviceWorkerRegistration: registration
+        });
+      } catch (retryErr: any) {
+        console.error('[FCM] Tentativa de auto-recuperação do token também falhou:', retryErr?.message || retryErr?.name);
+        throw retryErr;
+      }
     }
 
-    const token = await getToken(messaging, {
-      vapidKey,
-      serviceWorkerRegistration: registration
-    });
-
-    console.log("FCM DIAGNOSTIC:", {
-      swRegistered: true,
-      swScope: registration.scope,
-      tokenObtained: !!token,
-    });
+    if (token) {
+      const masked = `${token.substring(0, 6)}...${token.substring(token.length - 6)}`;
+      console.log(`[FCM] Token gerado com sucesso: ${masked}`);
+    } else {
+      console.warn('[FCM] Nenhum token retornado pelo Firebase.');
+    }
 
     return token;
   } catch (error: any) {
-    console.error("FCM DIAGNOSTIC ERROR:", {
+    console.error("[FCM] Falha ao obter token FCM:", {
       name: error?.name,
       code: error?.code,
-      status: error?.status,
-      message: error?.message,
-      stack: error?.stack
+      message: error?.message
     });
-
-    if (error?.status === 400 || error?.code === 'messaging/invalid-argument' || error?.name === 'AbortError') {
-      console.error("FCM DIAGNOSTIC - Falha no Push Service ou VAPID Key inválida. Certifique-se de que VITE_FIREBASE_VAPID_KEY está configurada corretamente no painel da Vercel correspondendo ao certificado Web Push do Firebase Console.");
-    }
-
     return null;
   }
 };
