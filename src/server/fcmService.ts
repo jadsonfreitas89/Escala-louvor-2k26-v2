@@ -1,6 +1,7 @@
 import { getDb } from "./db";
 import { getFirebaseAdminApp } from "./firebaseAdmin";
 import { getMessaging } from "firebase-admin/messaging";
+import { normalizarNome, destinatarioPertenceAoUsuario } from "./notifications";
 
 export async function getFcmTokensForUser(userId: string): Promise<string[]> {
   const db = getDb();
@@ -9,11 +10,33 @@ export async function getFcmTokensForUser(userId: string): Promise<string[]> {
     return [];
   }
   try {
+    const normSearch = normalizarNome(userId);
+    const isBroadcast = !normSearch || normSearch === "todos" || normSearch === "todos os membros" || normSearch === "geral" || normSearch === "all";
+
     const snapshot = await db.collection("fcm_tokens")
-      .where("userId", "==", userId)
       .where("active", "==", true)
       .get();
-    return snapshot.docs.map(doc => doc.data().token).filter(Boolean);
+
+    const tokens: string[] = [];
+    const seenTokens = new Set<string>();
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      if (!data || !data.token) continue;
+      const t = String(data.token).trim();
+      if (!t || seenTokens.has(t)) continue;
+
+      if (
+        isBroadcast ||
+        destinatarioPertenceAoUsuario(data.userId, userId) ||
+        destinatarioPertenceAoUsuario(userId, data.userId)
+      ) {
+        tokens.push(t);
+        seenTokens.add(t);
+      }
+    }
+
+    return tokens;
   } catch (error) {
     console.warn(`[FCM] Erro ao recuperar tokens para usuário ${userId}:`, error);
     return [];

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { getTituloCulto } from "../utils/cultoUtils";
 
 export interface NotificacaoRecord {
   id: string;
@@ -554,15 +555,6 @@ export function criarNotificacaoSeNaoExiste(params: {
   localNotificacoes.unshift(novaNotif);
   saveNotifications();
 
-  // Envia assincronamente para o FCM
-  sendFcmPushToUser(destinatario, {
-    title: titulo,
-    body: mensagem,
-    id: novaNotif.id,
-    eventoId: novaNotif.eventoId,
-    type: novaNotif.tipo
-  }).catch(err => console.error("[FCM] Erro ao disparar push:", err));
-
   // Envia assincronamente para a planilha se configurado
   if (origem !== "GOOGLE_SHEETS") {
     pushNotificacaoParaGas(novaNotif);
@@ -707,23 +699,92 @@ export function mergeGasNotifications(gasList: any[]): NotificacaoRecord[] {
 }
 
 /**
- * Obtém as notificações visíveis para um usuário autenticado com garantia de não retrocesso
+ * Verifica de forma inteligente se um determinado destinatário pertence ao usuário logado
+ */
+export function destinatarioPertenceAoUsuario(destinatario: string | null | undefined, usuario: string | null | undefined): boolean {
+  if (!usuario || !usuario.trim()) return false;
+  const normUser = normalizarNome(usuario);
+  if (!normUser) return false;
+
+  const normDest = normalizarNome(destinatario);
+
+  // Notificações para todos os membros / broadcasts
+  if (!normDest || normDest === "todos" || normDest === "todos os membros" || normDest === "geral" || normDest === "all" || normDest === "broadcast") {
+    return true;
+  }
+
+  // Correspondência exata de nome normalizado
+  if (normDest === normUser) return true;
+
+  // Comparação por primeiro nome ou substrings (com tamanho mínimo de 3 caracteres)
+  const partsUser = normUser.split(" ").filter((p) => p.length >= 3);
+  const partsDest = normDest.split(" ").filter((p) => p.length >= 3);
+
+  if (partsUser.length > 0 && normDest === partsUser[0]) return true;
+  if (partsDest.length > 0 && normUser === partsDest[0]) return true;
+
+  if (normUser.length >= 3 && normDest.length >= 3) {
+    if (normUser.includes(normDest) || normDest.includes(normUser)) return true;
+  }
+
+  // Mapeamento de apelidos e nomes equivalentes
+  const ALIASES: Record<string, string[]> = {
+    cris: ['cristina', 'cris'],
+    cristina: ['cris', 'cristina'],
+    vitoria: ['vitorinha', 'vitoria', 'vitória'],
+    vitorinha: ['vitoria', 'vitorinha'],
+    tuida: ['tuida', 'tuída'],
+    jaco: ['jaco', 'jacó'],
+    sergio: ['sergio', 'sérgio'],
+    otavio: ['otavio', 'otávio'],
+    thais: ['thais', 'thaís'],
+    maisa: ['maisa', 'maísa']
+  };
+
+  const firstUserWord = partsUser[0] || normUser;
+  const aliases = ALIASES[firstUserWord] || [];
+  if (aliases.some((alias) => normDest.includes(alias) || alias === normDest)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Obtém as notificações visíveis para um usuário autenticado com garantia de não retrocesso e sem duplicidade
  */
 export function getNotificacoesParaUsuario(nomeUsuario: string): NotificacaoRecord[] {
-  const normUser = normalizarNome(nomeUsuario);
-  return localNotificacoes
-    .filter((n) => {
-      const normDest = normalizarNome(n.destinatario);
-      return normDest === normUser || normDest === "todos" || normDest === "todos os membros" || normDest === "geral";
-    })
-    .map((n) => {
-      // Garante que se constar em markedReadKeys, retorna estritamente como SIM
-      if (n.lida !== "SIM" && isKeyMarkedRead(n.id, n.eventoId, n.destinatario)) {
-        n.lida = "SIM";
-      }
-      return n;
-    })
-    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+  if (!nomeUsuario || !nomeUsuario.trim()) {
+    return [];
+  }
+
+  const result: NotificacaoRecord[] = [];
+  const seenKeys = new Set<string>();
+
+  for (const n of localNotificacoes) {
+    if (!n) continue;
+
+    // Checa se a notificação se destina ao usuário autenticado
+    if (!destinatarioPertenceAoUsuario(n.destinatario, nomeUsuario)) {
+      continue;
+    }
+
+    // Deduplicação lógica por eventoId ou ID para o mesmo usuário
+    const key = n.eventoId ? `evt:${n.eventoId.trim()}` : `id:${n.id.trim()}`;
+    if (seenKeys.has(key)) {
+      continue;
+    }
+    seenKeys.add(key);
+
+    // Preserva status de leitura persistido
+    const isRead = n.lida === "SIM" || isKeyMarkedRead(n.id, n.eventoId, nomeUsuario);
+    result.push({
+      ...n,
+      lida: isRead ? "SIM" : "NAO"
+    });
+  }
+
+  return result.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
 }
 
 /**
@@ -831,6 +892,7 @@ export function processarLembretesDeCulto(
   const currentSlot = validSlots[validSlots.length - 1];
   const slotCode = currentSlot.slot.replace(":", "-");
 
+  const nomeCulto = getTituloCulto(escalaHoje.data);
   const membrosEscalados = extrairMembrosDaEscala(escalaHoje);
   let totalCriadas = 0;
 
@@ -851,15 +913,15 @@ export function processarLembretesDeCulto(
     let tipo: string;
 
     if (estaEscalado) {
-      titulo = "Culto Hoje";
+      titulo = `${nomeCulto} Hoje`;
       const detalheFuncao = membroInfo
         ? (membroInfo.instrumento ? `${membroInfo.funcao} (${membroInfo.instrumento})` : membroInfo.funcao)
         : "a equipe";
-      mensagem = `${integrante.nome}, a Paz! Hoje tem culto e você está escalado(a) como ${detalheFuncao}!`;
+      mensagem = `${integrante.nome}, a Paz! Hoje tem ${nomeCulto} e você está escalado(a) como ${detalheFuncao}!`;
       tipo = "CULTO";
     } else {
-      titulo = "Lembrete de Culto";
-      mensagem = "Olha que benção! Passando pra lembrar que hoje tem culto!";
+      titulo = `Lembrete - ${nomeCulto}`;
+      mensagem = `Olha que benção! Passando pra lembrar que hoje tem ${nomeCulto}!`;
       tipo = "LEMBRETE";
     }
 
@@ -893,7 +955,19 @@ export function processarNotificacaoNovoRecado(
   const eventoId = `NOVO_RECADO_${recadoId}`;
   let count = 0;
 
-  for (const integrante of integrantes) {
+  // 1. Notificação broadcast para Todos
+  const nTodos = criarNotificacaoSeNaoExiste({
+    destinatario: "Todos",
+    tipo: "NOVO_RECADO",
+    titulo: "Novo Recado",
+    mensagem: "ATENÇÃO! Tem um novo recado!",
+    eventoId,
+    origem
+  });
+  if (nTodos) count++;
+
+  // 2. Notificações específicas para cada integrante
+  for (const integrante of (integrantes || [])) {
     if (!integrante || !integrante.nome) continue;
     const n = criarNotificacaoSeNaoExiste({
       destinatario: integrante.nome,
@@ -905,6 +979,15 @@ export function processarNotificacaoNovoRecado(
     });
     if (n) count++;
   }
+
+  // 3. Dispara push FCM para todos
+  sendFcmPushToUser("Todos", {
+    title: "Novo Recado",
+    body: "ATENÇÃO! Tem um novo recado!",
+    id: `notif_${eventoId}`,
+    eventoId,
+    type: "NOVO_RECADO"
+  }).catch((err) => console.error("[FCM] Erro ao disparar push de recado:", err));
 
   if (count > 0) {
     logChangeDetector({
@@ -955,7 +1038,20 @@ export function processarNotificacaoNovaEscala(
   }
 
   let count = 0;
-  for (const integrante of integrantes) {
+
+  // 1. Notificação broadcast para Todos
+  const nTodos = criarNotificacaoSeNaoExiste({
+    destinatario: "Todos",
+    tipo: "NOVA_ESCALA",
+    titulo: "Nova Escala",
+    mensagem: "ATENÇÃO!! NOVA ESCALA DISPONIVEL",
+    eventoId,
+    origem
+  });
+  if (nTodos) count++;
+
+  // 2. Notificações específicas por integrante
+  for (const integrante of (integrantes || [])) {
     if (!integrante || !integrante.nome) continue;
     const n = criarNotificacaoSeNaoExiste({
       destinatario: integrante.nome,
@@ -967,6 +1063,15 @@ export function processarNotificacaoNovaEscala(
     });
     if (n) count++;
   }
+
+  // 3. Dispara push FCM para todos
+  sendFcmPushToUser("Todos", {
+    title: "Nova Escala",
+    body: "ATENÇÃO!! NOVA ESCALA DISPONIVEL",
+    id: `notif_${eventoId}`,
+    eventoId,
+    type: "NOVA_ESCALA"
+  }).catch((err) => console.error("[FCM] Erro ao disparar push de nova escala:", err));
 
   if (count > 0) {
     logChangeDetector({
@@ -1335,6 +1440,13 @@ export function detectarAlteracoesNaPlanilha(params: {
 
             if (n) {
               totalNotificacoes++;
+              sendFcmPushToUser(mAntigo.nome, {
+                title: n.titulo,
+                body: n.mensagem,
+                id: n.id,
+                eventoId: n.eventoId,
+                type: n.tipo
+              }).catch(() => {});
               logChangeDetector({
                 aba: "ESCALA",
                 data: dataCulto,
@@ -1373,6 +1485,13 @@ export function detectarAlteracoesNaPlanilha(params: {
 
             if (n) {
               totalNotificacoes++;
+              sendFcmPushToUser(mNovo.nome, {
+                title: n.titulo,
+                body: n.mensagem,
+                id: n.id,
+                eventoId: n.eventoId,
+                type: n.tipo
+              }).catch(() => {});
               logChangeDetector({
                 aba: "ESCALA",
                 data: dataCulto,
@@ -1438,6 +1557,13 @@ export function detectarAlteracoesNaPlanilha(params: {
 
               if (n) {
                 totalNotificacoes++;
+                sendFcmPushToUser(mNovo.nome, {
+                  title: n.titulo,
+                  body: n.mensagem,
+                  id: n.id,
+                  eventoId: n.eventoId,
+                  type: n.tipo
+                }).catch(() => {});
                 logChangeDetector({
                   aba: "ESCALA",
                   data: dataCulto,

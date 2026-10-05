@@ -237,6 +237,7 @@ if (messaging) {
       body: body,
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
+      tag: notificationId || 'escala-louvor-notif',
       data: {
         id: notificationId,
         url: targetUrl,

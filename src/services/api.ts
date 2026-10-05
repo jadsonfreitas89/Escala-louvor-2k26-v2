@@ -462,9 +462,25 @@ class ApiService {
 
   // --- Cache de Notificações ---
 
+  private getNormalizedUserFromToken(): string {
+    const token = this.getToken();
+    if (!token) return 'guest';
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        if (payload && payload.nome) {
+          return String(payload.nome).trim().toLowerCase().replace(/\s+/g, '_');
+        }
+      }
+    } catch {}
+    return 'user';
+  }
+
   private saveNotificacoesToCache(notificacoes: Notificacao[]): void {
     try {
-      localStorage.setItem('escala_louvor_notificacoes_cache', JSON.stringify(notificacoes));
+      const userKey = this.getNormalizedUserFromToken();
+      localStorage.setItem(`escala_louvor_notificacoes_cache_${userKey}`, JSON.stringify(notificacoes));
     } catch (e) {
       console.warn('Erro ao salvar notificações no cache:', e);
     }
@@ -472,7 +488,8 @@ class ApiService {
 
   public loadNotificacoesFromCache(): Notificacao[] {
     try {
-      const raw = localStorage.getItem('escala_louvor_notificacoes_cache');
+      const userKey = this.getNormalizedUserFromToken();
+      const raw = localStorage.getItem(`escala_louvor_notificacoes_cache_${userKey}`);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {

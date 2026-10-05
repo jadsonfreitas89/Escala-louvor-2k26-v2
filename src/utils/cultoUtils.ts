@@ -88,7 +88,7 @@ export function getNthSundayOfMonth(date: Date): number {
 /**
  * Obtém o nome/título oficial do culto baseado na data e regras do ministério
  * Regras:
- * - TERÇA: Cura e Libertação
+ * - TERÇA: Culto da Família
  * - SEXTA: Noite da Bênção
  * - DOMINGO: 1º Ceia, 2º Oferta, 3º+ Louvor e Adoração
  */
@@ -100,7 +100,7 @@ export function getTituloCulto(dataStr: string): string {
 
   switch (dayOfWeek) {
     case 2: // Terça-feira
-      return 'Cura e Libertação';
+      return 'Culto da Família';
     case 5: // Sexta-feira
       return 'Noite da Bênção';
     case 0: { // Domingo
