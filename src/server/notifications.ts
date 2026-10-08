@@ -518,21 +518,21 @@ export function criarNotificacaoSeNaoExiste(params: {
   }
 
   const normDest = normalizarNome(destinatario);
-  const normEvento = eventoId.trim();
+  const normEvento = eventoId.trim().toLowerCase();
   const cleanCustomId = customId ? customId.trim() : "";
 
-  // Verifica se já existe notificação com este (destinatário + eventoId) ou com o mesmo ID
+  // Verifica se já existe notificação com este destinatário exato e eventoId (ou com o mesmo ID)
   const existing = localNotificacoes.find((n) => {
     if (cleanCustomId && n.id && n.id.trim() === cleanCustomId) {
       return true;
     }
     const nDest = normalizarNome(n.destinatario);
-    const nEvento = (n.eventoId || "").trim();
-    return (nDest === normDest || nDest === "todos") && nEvento === normEvento;
+    const nEvento = (n.eventoId || "").trim().toLowerCase();
+    return nDest === normDest && nEvento === normEvento;
   });
 
   if (existing) {
-    return null; // Preserva integralmente o registro existente sem recriar novo UUID
+    return null; // Preserva integralmente o registro existente sem recriar
   }
 
   // Se o eventoId já foi marcado como lido anteriormente para este usuário, cria diretamente como LIDA
@@ -548,7 +548,7 @@ export function criarNotificacaoSeNaoExiste(params: {
     data: nowIso,
     dataHora: nowIso,
     lida: jaFoiLida ? "SIM" : "NAO",
-    eventoId: normEvento,
+    eventoId: eventoId.trim(),
     origem: origem || "APP"
   };
 
@@ -836,9 +836,9 @@ export function marcarTodasComoLidasLocal(nomeUsuario: string): number {
 // =============================================================================
 
 /**
- * 1. Agendamento dos Cultos (Terça, Sexta e Domingo nos horários oficiais)
- * - Terça: 09:00, 12:00, 15:00, 18:00, 19:00
- * - Sexta: 09:00, 12:00, 15:00, 18:00, 19:00
+ * 1. Agendamento dos Cultos (Terça, Sexta e Domingo) e Lembretes de Quarta-Feira (11, 15, 17)
+ * - Terça e Sexta: 09:00, 12:00, 15:00, 18:00, 19:00
+ * - Quarta: 11:00, 15:00, 17:00 (Lembrete de louvores)
  * - Domingo: 10:00, 13:00, 15:30, 17:00
  */
 export function processarLembretesDeCulto(
@@ -852,7 +852,7 @@ export function processarLembretesDeCulto(
   const sp = getSaoPauloNow();
   const { dateStr, isoDate, dayOfWeek, totalMinutes } = sp;
 
-  let slots: { slot: string; slotMinutes: number }[] = [];
+  let slots: { slot: string; slotMinutes: number; isWednesdayLouvores?: boolean }[] = [];
 
   if (dayOfWeek === 2 || dayOfWeek === 5) {
     slots = [
@@ -861,6 +861,13 @@ export function processarLembretesDeCulto(
       { slot: "15:00", slotMinutes: 15 * 60 },
       { slot: "18:00", slotMinutes: 18 * 60 },
       { slot: "19:00", slotMinutes: 19 * 60 }
+    ];
+  } else if (dayOfWeek === 3) {
+    // Quarta-feira: Lembrete de louvores (11:00, 15:00, 17:00)
+    slots = [
+      { slot: "11:00", slotMinutes: 11 * 60, isWednesdayLouvores: true },
+      { slot: "15:00", slotMinutes: 15 * 60, isWednesdayLouvores: true },
+      { slot: "17:00", slotMinutes: 17 * 60, isWednesdayLouvores: true }
     ];
   } else if (dayOfWeek === 0) {
     slots = [
@@ -871,6 +878,48 @@ export function processarLembretesDeCulto(
     ];
   } else {
     return 0;
+  }
+
+  // Identifica os slots do dia que já chegaram
+  const validSlots = slots.filter((s) => totalMinutes >= s.slotMinutes);
+  if (validSlots.length === 0) return 0;
+
+  // Usa o slot mais recente ativo no momento
+  const currentSlot = validSlots[validSlots.length - 1];
+  const slotHour = currentSlot.slot.split(":")[0];
+  const slotCode = currentSlot.slot.replace(":", "-");
+  const cleanDateStr = isoDate.replace(/-/g, "_");
+
+  // Se for Quarta-feira: lembrete de louvores por horário
+  if (currentSlot.isWednesdayLouvores) {
+    let totalCriadas = 0;
+    for (const integrante of integrantes) {
+      if (!integrante || !integrante.nome) continue;
+      const normUser = normalizarNome(integrante.nome).replace(/\s+/g, "_");
+      // Chave estrita: lembrete-louvores:{eventoId}:{destinatario}:{horario}
+      const eventoId = `lembrete-louvores:${cleanDateStr}:${normUser}:${slotHour}`;
+
+      const notif = criarNotificacaoSeNaoExiste({
+        destinatario: integrante.nome,
+        tipo: "LEMBRETE_LOUVORES",
+        titulo: "Louvores para o Culto",
+        mensagem: `${integrante.nome}, a Paz! Lembramos que os louvores já estão disponíveis no aplicativo!`,
+        eventoId,
+        origem: "APP"
+      });
+
+      if (notif) {
+        totalCriadas++;
+        sendFcmPushToUser(integrante.nome, {
+          title: notif.titulo,
+          body: notif.mensagem,
+          id: notif.id,
+          eventoId: notif.eventoId,
+          type: notif.tipo
+        }).catch((err) => console.error("[FCM] Erro ao disparar push lembrete louvores:", err));
+      }
+    }
+    return totalCriadas;
   }
 
   const escalaHoje = escalas.find((e) => {
@@ -884,14 +933,6 @@ export function processarLembretesDeCulto(
     return 0;
   }
 
-  // Identifica os slots do dia que já chegaram
-  const validSlots = slots.filter((s) => totalMinutes >= s.slotMinutes);
-  if (validSlots.length === 0) return 0;
-
-  // Usa o slot mais recente ativo no momento
-  const currentSlot = validSlots[validSlots.length - 1];
-  const slotCode = currentSlot.slot.replace(":", "-");
-
   const nomeCulto = getTituloCulto(escalaHoje.data);
   const membrosEscalados = extrairMembrosDaEscala(escalaHoje);
   let totalCriadas = 0;
@@ -900,8 +941,8 @@ export function processarLembretesDeCulto(
     if (!integrante || !integrante.nome) continue;
     const normUser = normalizarNome(integrante.nome).replace(/\s+/g, "_");
 
-    // Deduplicação estrita por chave lógica: TIPO + DATA + HORA + USUARIO
-    const eventoId = `CULTO_${isoDate}_${slotCode}_${normUser}`;
+    // Chave estrita: culto:{eventoId}:{destinatario}
+    const eventoId = `culto:${cleanDateStr}_${slotCode}:${normUser}`;
 
     const membroInfo = membrosEscalados.find(
       (m) => normalizarNome(m.nome) === normalizarNome(integrante.nome)
@@ -952,6 +993,7 @@ export function processarLembretesDeCulto(
 /**
  * 2. Novo Recado Publicado
  * Mensagem: "ATENÇÃO! Tem um novo recado!"
+ * Chave: recado:{recadoId}:{destinatario}
  */
 export function processarNotificacaoNovoRecado(
   recadoId: string,
@@ -959,29 +1001,31 @@ export function processarNotificacaoNovoRecado(
   origem: "APP" | "GOOGLE_SHEETS" = "APP"
 ): number {
   if (!recadoId) return 0;
-  const eventoId = `NOVO_RECADO_${recadoId}`;
   let count = 0;
 
   // 1. Notificação broadcast para Todos
+  const broadcastKey = `recado:${recadoId}:todos`;
   const nTodos = criarNotificacaoSeNaoExiste({
     destinatario: "Todos",
     tipo: "NOVO_RECADO",
     titulo: "Novo Recado",
     mensagem: "ATENÇÃO! Tem um novo recado!",
-    eventoId,
+    eventoId: broadcastKey,
     origem
   });
   if (nTodos) count++;
 
-  // 2. Notificações específicas para cada integrante
+  // 2. Notificações específicas por integrante
   for (const integrante of (integrantes || [])) {
     if (!integrante || !integrante.nome) continue;
+    const normUser = normalizarNome(integrante.nome).replace(/\s+/g, "_");
+    const userKey = `recado:${recadoId}:${normUser}`;
     const n = criarNotificacaoSeNaoExiste({
       destinatario: integrante.nome,
       tipo: "NOVO_RECADO",
       titulo: "Novo Recado",
       mensagem: "ATENÇÃO! Tem um novo recado!",
-      eventoId,
+      eventoId: userKey,
       origem
     });
     if (n) count++;
@@ -991,8 +1035,8 @@ export function processarNotificacaoNovoRecado(
   sendFcmPushToUser("Todos", {
     title: "Novo Recado",
     body: "ATENÇÃO! Tem um novo recado!",
-    id: `notif_${eventoId}`,
-    eventoId,
+    id: `notif_${recadoId}`,
+    eventoId: broadcastKey,
     type: "NOVO_RECADO"
   }).catch((err) => console.error("[FCM] Erro ao disparar push de recado:", err));
 
@@ -1003,7 +1047,7 @@ export function processarNotificacaoNovoRecado(
       alteracaoDetectada: "Novo recado inserido",
       estadoAnterior: "(vazio)",
       estadoAtual: `ID: ${recadoId}`,
-      eventoId,
+      eventoId: broadcastKey,
       destinatarios: "Todos os integrantes",
       notificacaoCriada: "ATENÇÃO! Tem um novo recado!",
       origem
@@ -1016,26 +1060,35 @@ export function processarNotificacaoNovoRecado(
 /**
  * 3. Nova Escala Publicada (Líder aciona botão oficial)
  * Mensagem EXATA: "ATENÇÃO!! NOVA ESCALA DISPONIVEL"
- * eventoId: NOVA_ESCALA_YYYY_MM
+ * Chave: nova-escala:{mes}:{ano}:{destinatario}
  */
 export function processarNotificacaoNovaEscala(
   mesParam: string | undefined,
   integrantes: IntegranteRef[],
   origem: "APP" | "GOOGLE_SHEETS" = "APP"
 ): { sucesso: boolean; jaEnviada?: boolean; mensagem: string; totalEnviadas?: number } {
-  const sp = getSaoPauloNow();
-  let mesKey = sp.isoDate.substring(0, 7).replace("-", "_");
+  const sp = getSaoPauloNow(); // sp.isoDate: "YYYY-MM-DD"
+  let ano = sp.isoDate.substring(0, 4);
+  let mes = sp.isoDate.substring(5, 7);
 
   if (mesParam && typeof mesParam === "string" && mesParam.trim()) {
-    const clean = mesParam.trim().replace(/[^0-9]/g, "_");
-    if (clean.length >= 6) {
-      mesKey = clean;
+    const clean = mesParam.trim().replace(/[^0-9]/g, "");
+    if (clean.length === 6) {
+      if (clean.startsWith("20")) {
+        ano = clean.substring(0, 4);
+        mes = clean.substring(4, 6);
+      } else {
+        mes = clean.substring(0, 2);
+        ano = clean.substring(2, 6);
+      }
+    } else if (clean.length >= 1) {
+      mes = clean.padStart(2, "0");
     }
   }
 
-  const eventoId = `NOVA_ESCALA_${mesKey}`;
+  const broadcastKey = `nova-escala:${mes}:${ano}:todos`;
 
-  const jaExiste = localNotificacoes.some((n) => (n.eventoId || "").trim() === eventoId);
+  const jaExiste = localNotificacoes.some((n) => (n.eventoId || "").trim().toLowerCase() === broadcastKey);
   if (jaExiste) {
     return {
       sucesso: false,
@@ -1052,7 +1105,7 @@ export function processarNotificacaoNovaEscala(
     tipo: "NOVA_ESCALA",
     titulo: "Nova Escala",
     mensagem: "ATENÇÃO!! NOVA ESCALA DISPONIVEL",
-    eventoId,
+    eventoId: broadcastKey,
     origem
   });
   if (nTodos) count++;
@@ -1060,12 +1113,14 @@ export function processarNotificacaoNovaEscala(
   // 2. Notificações específicas por integrante
   for (const integrante of (integrantes || [])) {
     if (!integrante || !integrante.nome) continue;
+    const normUser = normalizarNome(integrante.nome).replace(/\s+/g, "_");
+    const userKey = `nova-escala:${mes}:${ano}:${normUser}`;
     const n = criarNotificacaoSeNaoExiste({
       destinatario: integrante.nome,
       tipo: "NOVA_ESCALA",
       titulo: "Nova Escala",
       mensagem: "ATENÇÃO!! NOVA ESCALA DISPONIVEL",
-      eventoId,
+      eventoId: userKey,
       origem
     });
     if (n) count++;
@@ -1075,8 +1130,8 @@ export function processarNotificacaoNovaEscala(
   sendFcmPushToUser("Todos", {
     title: "Nova Escala",
     body: "ATENÇÃO!! NOVA ESCALA DISPONIVEL",
-    id: `notif_${eventoId}`,
-    eventoId,
+    id: `notif_${broadcastKey}`,
+    eventoId: broadcastKey,
     type: "NOVA_ESCALA"
   }).catch((err) => console.error("[FCM] Erro ao disparar push de nova escala:", err));
 
@@ -1085,8 +1140,8 @@ export function processarNotificacaoNovaEscala(
       aba: "ESCALA",
       alteracaoDetectada: "Divulgação de nova escala mensal",
       estadoAnterior: "(não divulgada)",
-      estadoAtual: `Mês: ${mesKey}`,
-      eventoId,
+      estadoAtual: `Mês: ${mes}/${ano}`,
+      eventoId: broadcastKey,
       destinatarios: "Todos os integrantes",
       notificacaoCriada: "ATENÇÃO!! NOVA ESCALA DISPONIVEL",
       origem
@@ -1103,6 +1158,7 @@ export function processarNotificacaoNovaEscala(
 /**
  * 4. Nova Solicitação de Troca Criada
  * Somente Líderes recebem: "Olá Lider, (nome) fez um solicitação de troca!"
+ * Chave: troca:{solicitacaoId}:nova:{destinatario}
  */
 export function processarNotificacaoNovaSolicitacao(params: {
   solicitacaoId: string;
@@ -1113,7 +1169,6 @@ export function processarNotificacaoNovaSolicitacao(params: {
 }): number {
   const { solicitacaoId, quemPediu, dataEscala, integrantes, origem = "APP" } = params;
   const safeId = (solicitacaoId || `${dataEscala}_${quemPediu}`).replace(/[^a-zA-Z0-9_-]/g, "_");
-  const eventoId = `SOLICITACAO_${safeId}_NOVA`;
 
   const lideres = integrantes.filter((i) => {
     const f = (i.funcao || "").toLowerCase();
@@ -1122,12 +1177,14 @@ export function processarNotificacaoNovaSolicitacao(params: {
 
   let count = 0;
   for (const lider of lideres) {
+    const normLider = normalizarNome(lider.nome).replace(/\s+/g, "_");
+    const userKey = `troca:${safeId}:nova:${normLider}`;
     const n = criarNotificacaoSeNaoExiste({
       destinatario: lider.nome,
       tipo: "SOLICITACAO_NOVA",
       titulo: "Solicitação de Troca",
       mensagem: `Olá Lider, ${quemPediu} fez um solicitação de troca!`,
-      eventoId,
+      eventoId: userKey,
       origem
     });
     if (n) {
@@ -1153,6 +1210,7 @@ export function processarNotificacaoNovaSolicitacao(params: {
  * - RECUSADA:
  *   Solicitante: "A Paz (nome)! Solicitação NÃO aprovada!"
  *   Substituto: "A Paz (nome)! Sem alteração na escala!"
+ * Chave: troca:{solicitacaoId}:{tipo}:{destinatario}
  */
 export function processarNotificacaoDecisaoSolicitacao(params: {
   solicitacaoId: string;
@@ -1164,17 +1222,20 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
 }): number {
   const { solicitacaoId, quemPediu, substituto, dataEscala, acao, origem = "APP" } = params;
   const safeId = (solicitacaoId || `${dataEscala}_${quemPediu}`).replace(/[^a-zA-Z0-9_-]/g, "_");
+  const normPediu = normalizarNome(quemPediu).replace(/\s+/g, "_");
+  const normSubst = substituto ? normalizarNome(substituto).replace(/\s+/g, "_") : "";
 
   let count = 0;
 
   if (acao === "APROVAR") {
     // Solicitante
+    const keySolic = `troca:${safeId}:aprovada_solic:${normPediu}`;
     const n1 = criarNotificacaoSeNaoExiste({
       destinatario: quemPediu,
       tipo: "SOLICITACAO_APROVADA",
       titulo: "Solicitação Aprovada",
       mensagem: `A Paz ${quemPediu}! Sua solicitação foi aprovada!`,
-      eventoId: `SOLICITACAO_${safeId}_APROVADA_SOLICITANTE`,
+      eventoId: keySolic,
       origem
     });
     if (n1) {
@@ -1190,12 +1251,13 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
 
     // Substituto
     if (substituto) {
+      const keySubst = `troca:${safeId}:aprovada_subst:${normSubst}`;
       const n2 = criarNotificacaoSeNaoExiste({
         destinatario: substituto,
         tipo: "SOLICITACAO_APROVADA",
         titulo: "Nova Escala Atribuída",
         mensagem: `A Paz ${substituto}! Nova escala pra você!`,
-        eventoId: `SOLICITACAO_${safeId}_APROVADA_SUBSTITUTO`,
+        eventoId: keySubst,
         origem
       });
       if (n2) {
@@ -1216,19 +1278,20 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
       alteracaoDetectada: `Solicitação Aprovada (Solicitante: ${quemPediu}, Substituto: ${substituto})`,
       estadoAnterior: "PENDENTE",
       estadoAtual: "APROVADA",
-      eventoId: `SOLICITACAO_${safeId}_APROVADA`,
+      eventoId: `troca:${safeId}:aprovada`,
       destinatarios: `${quemPediu}, ${substituto}`,
       notificacaoCriada: `Solicitante: Aprovada / Substituto: Nova Escala`,
       origem
     });
   } else if (acao === "RECUSAR") {
     // Solicitante
+    const keySolic = `troca:${safeId}:recusada_solic:${normPediu}`;
     const n1 = criarNotificacaoSeNaoExiste({
       destinatario: quemPediu,
       tipo: "SOLICITACAO_RECUSADA",
       titulo: "Solicitação Recusada",
       mensagem: `A Paz ${quemPediu}! Solicitação NÃO aprovada!`,
-      eventoId: `SOLICITACAO_${safeId}_RECUSADA_SOLICITANTE`,
+      eventoId: keySolic,
       origem
     });
     if (n1) {
@@ -1244,12 +1307,13 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
 
     // Substituto
     if (substituto) {
+      const keySubst = `troca:${safeId}:recusada_subst:${normSubst}`;
       const n2 = criarNotificacaoSeNaoExiste({
         destinatario: substituto,
         tipo: "SOLICITACAO_RECUSADA",
         titulo: "Solicitação Não Aprovada",
         mensagem: `A Paz ${substituto}! Sem alteração na escala!`,
-        eventoId: `SOLICITACAO_${safeId}_RECUSADA_SUBSTITUTO`,
+        eventoId: keySubst,
         origem
       });
       if (n2) {
@@ -1270,7 +1334,7 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
       alteracaoDetectada: `Solicitação Recusada (Solicitante: ${quemPediu}, Substituto: ${substituto})`,
       estadoAnterior: "PENDENTE",
       estadoAtual: "RECUSADA",
-      eventoId: `SOLICITACAO_${safeId}_RECUSADA`,
+      eventoId: `troca:${safeId}:recusada`,
       destinatarios: `${quemPediu}, ${substituto}`,
       notificacaoCriada: `Solicitante: NÃO aprovada / Substituto: Sem alteração`,
       origem
@@ -1283,7 +1347,8 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
 /**
  * 7 & 8. Louvores e Uniformes Disponibilizados / Alterados
  * - Apenas quem está escalado recebe: "A Paz (nome)! Os louvores e uniformes já estão disponíveis!"
- * - Dispara apenas se houver alteração REAL ou disponibilização inicial.
+ * - Dispara apenas para quem está na escala daquele evento.
+ * Chave: louvores:{eventoId}:{destinatario}
  */
 export function processarNotificacaoLouvoresUniformes(params: {
   dataEscala: string;
@@ -1314,21 +1379,19 @@ export function processarNotificacaoLouvoresUniformes(params: {
   louvoresHashes[dataEscala] = hash;
   saveLouvoresHashes();
 
-  const eventoId = `LOUVORES_UNIFORMES_${cleanData}_V${hash}`;
   let count = 0;
   const destinatariosNotificados: string[] = [];
 
   const membrosEscala = extrairMembrosDaEscala(escala);
   const nomesAlvo = new Set<string>();
 
-  // 1. Membros diretamente extraídos dos campos da escala (Dirigente, Mesário, Vocais, Músicos)
+  // Somente quem está realmente na escala do evento
   for (const m of membrosEscala) {
     if (m && m.nome && m.nome.trim()) {
       nomesAlvo.add(m.nome.trim());
     }
   }
 
-  // 2. Integrantes cadastrados que estejam na escala
   for (const integrante of (integrantes || [])) {
     if (!integrante || !integrante.nome) continue;
     if (isUserInEscala(escala, integrante.nome)) {
@@ -1337,12 +1400,16 @@ export function processarNotificacaoLouvoresUniformes(params: {
   }
 
   for (const nomeDest of nomesAlvo) {
+    const normUser = normalizarNome(nomeDest).replace(/\s+/g, "_");
+    // Chave: louvores:{eventoId}:{destinatario}
+    const userKey = `louvores:${cleanData}_v${hash}:${normUser}`;
+
     const n = criarNotificacaoSeNaoExiste({
       destinatario: nomeDest,
       tipo: "LOUVORES_UNIFORMES",
       titulo: "Louvores e Uniformes",
       mensagem: `A Paz ${nomeDest}! Os louvores e uniformes já estão disponíveis!`,
-      eventoId,
+      eventoId: userKey,
       origem
     });
     if (n) {
@@ -1365,7 +1432,7 @@ export function processarNotificacaoLouvoresUniformes(params: {
       alteracaoDetectada: `Louvores/Uniformes Atualizados`,
       estadoAnterior: previousHash ? `Hash anterior: ${previousHash}` : "(vazio)",
       estadoAtual: `Hash novo: ${hash}`,
-      eventoId,
+      eventoId: `louvores:${cleanData}_v${hash}`,
       destinatarios: destinatariosNotificados.join(", "),
       notificacaoCriada: "A Paz (nome)! Os louvores e uniformes já estão disponíveis!",
       origem

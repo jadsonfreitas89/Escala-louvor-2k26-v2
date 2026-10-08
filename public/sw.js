@@ -219,6 +219,43 @@ self.addEventListener('message', async (event) => {
   }
 });
 
+// Listener nativo de Web Push para garantia de exibição mesmo com PWA fechado
+self.addEventListener('push', (event) => {
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch {
+      data = { body: event.data.text() };
+    }
+  }
+
+  const notification = data.notification || data;
+  const title = notification.title || data.title || 'Escala Louvor';
+  const body = notification.body || data.body || '';
+  const notificationId = data.data?.id || data.data?.eventoId || data.id || `push_${Date.now()}`;
+  const targetUrl = data.data?.url || data.url || '/notificacoes';
+
+  event.waitUntil((async () => {
+    if (notificationId && await isDuplicate(notificationId)) {
+      console.log('[SW] Push ignorado por duplicidade:', notificationId);
+      return;
+    }
+
+    return self.registration.showNotification(title, {
+      body,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      tag: notificationId || 'escala-louvor-notif',
+      data: {
+        id: notificationId,
+        url: targetUrl,
+        ...data.data
+      }
+    });
+  })());
+});
+
 // Listener do Firebase Messaging em Background
 if (messaging) {
   messaging.onBackgroundMessage(async (payload) => {
