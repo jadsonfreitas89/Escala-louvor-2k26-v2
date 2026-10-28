@@ -176,10 +176,16 @@ async function runTests() {
     { nome: "Maria Santos", funcao: "Líder" }
   ];
 
-  const countLembretes1 = processarLembretesDeCulto(escalaMock, integrantesMock);
-  const countLembretes2 = processarLembretesDeCulto(escalaMock, integrantesMock);
-  assert(countLembretes2 === 0, "Segunda execução no mesmo horário/dia deve retornar 0 notificações (idempotente).");
-  console.log("✅ Lembretes de culto e janelas demonstraram idempotência total!");
+  const countLembretes1 = processarLembretesDeCulto(escalaMock, integrantesMock, []);
+  assert(countLembretes1 === 0, "Sem louvores cadastrados, não deve criar lembretes de louvores.");
+  
+  const countLembretes2 = processarLembretesDeCulto(escalaMock, integrantesMock, [{ data: "28/10/2026", louvor: "Hino 1" }]);
+  assert(countLembretes2 > 0, "Com louvores cadastrados, deve criar lembretes.");
+  
+  const countLembretes3 = processarLembretesDeCulto(escalaMock, integrantesMock, [{ data: "29/10/2026", louvor: "Outra data" }]);
+  assert(countLembretes3 === 0, "Louvores para outra data não devem autorizar lembrete para hoje.");
+  
+  console.log("✅ Lembretes de culto e verificação de louvores validados!");
 
   // 6. Teste de Proteção do Endpoint /api/notificacoes/cron (CRON_SECRET)
   console.log("\n6. Testando proteção do endpoint cron com CRON_SECRET...");

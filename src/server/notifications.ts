@@ -908,7 +908,8 @@ export function marcarTodasComoLidasLocal(nomeUsuario: string): number {
  */
 export function processarLembretesDeCulto(
   escalas: EscalaRef[],
-  integrantes: IntegranteRef[]
+  integrantes: IntegranteRef[],
+  linkLouvores: any[] = []
 ): number {
   if (!escalas || escalas.length === 0 || !integrantes || integrantes.length === 0) {
     return 0;
@@ -958,6 +959,12 @@ export function processarLembretesDeCulto(
 
     // Se for Quarta-feira: lembrete de louvores por horário
     if (currentSlot.isWednesdayLouvores) {
+      // Confirma que existe pelo menos um louvor cadastrado para esta data
+      const louvoresParaData = linkLouvores.filter((l) => l.data === dateStr);
+      if (louvoresParaData.length === 0) {
+        continue; // Ignora lembrete se não houver louvores cadastrados
+      }
+
       for (const integrante of integrantes) {
         if (!integrante || !integrante.nome) continue;
         const normUser = normalizarNome(integrante.nome).replace(/\s+/g, "_");

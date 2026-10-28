@@ -282,7 +282,7 @@ async function syncEscalaDataBackground(origem: "APP" | "GOOGLE_SHEETS" = "GOOGL
       }
 
       // Processa lembretes de culto com base no fuso America/Sao_Paulo
-      processarLembretesDeCulto(cachedEscalas, cachedIntegrantes);
+      processarLembretesDeCulto(cachedEscalas, cachedIntegrantes, cachedLinkLouvores);
     }
   } catch (err) {
     // Falha silenciosa em background para não interromper a execução
@@ -302,7 +302,7 @@ function startCultoScheduler() {
   // Execução a cada 30 segundos
   setInterval(() => {
     try {
-      processarLembretesDeCulto(cachedEscalas, cachedIntegrantes);
+      processarLembretesDeCulto(cachedEscalas, cachedIntegrantes, cachedLinkLouvores);
     } catch (e) {
       // Ignora erro em loop de intervalo
     }
