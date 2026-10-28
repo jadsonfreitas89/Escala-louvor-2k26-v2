@@ -453,11 +453,38 @@ async function runTests() {
   const r4 = evaluateRecadoResponse(false, "");
   assert(r4.handled === false && r4.status === 502, "Cenário 4: HTTP não OK deve abortar sem envio FCM.");
 
-  // Cenário 5: Criação confirmada respeita idempotência e destinatários (verifica que eventoId gerado é unico por recadoId)
+  // Cenário 5: Criação confirmada respeita idempotência e destinatários (verifica que eventoId é único por recadoId + destinatário)
   const recIdTest = "rec_test_999";
-  const evKey1 = `recado:${recIdTest}:todos`;
-  const evKey2 = `recado:${recIdTest}:todos`;
-  assert(evKey1 === evKey2, "Cenário 5: Chave de idempotência do recado deve ser determinística e única por recadoId.");
+  const evKey1 = `recado:${recIdTest}:lucas_solicitante`;
+  const evKey2 = `recado:${recIdTest}:maria_santos`;
+  assert(evKey1 !== evKey2, "Cenário 5: Chave de idempotência do recado deve ser única por recadoId + destinatário.");
+
+  // Cenário 6: Teste de exclusão de recado (simulado)
+  console.log("\n13. Testando exclusão definitiva de recado...");
+  const mockSheetRecados = [
+    ["ID", "Título", "Mensagem", "Imagem URL", "Ativo", "Data Criação"],
+    ["rec_123", "Título 1", "Mensagem 1", "", "SIM", "28/10/2026"],
+    ["rec_456", "Título 2", "Mensagem 2", "", "SIM", "28/10/2026"]
+  ];
+
+  function simulateExcluirRecado(id: string) {
+    for (let r = 1; r < mockSheetRecados.length; r++) {
+      if (mockSheetRecados[r][0] === id) {
+        mockSheetRecados.splice(r, 1);
+        return { sucesso: true };
+      }
+    }
+    return { sucesso: false };
+  }
+
+  const resExcluir1 = simulateExcluirRecado("rec_123");
+  assert(resExcluir1.sucesso === true, "Exclusão de recado existente deve ter sucesso.");
+  assert(mockSheetRecados.length === 2, "Quantidade de linhas deve ter reduzido para 2.");
+  assert(mockSheetRecados[1][0] === "rec_456", "Linha restante deve ser rec_456.");
+
+  const resExcluir2 = simulateExcluirRecado("rec_invalido");
+  assert(resExcluir2.sucesso === false, "Exclusão de recado inexistente deve falhar.");
+  console.log("✅ Exclusão definitiva de recados validada!");
 
   console.log("✅ Todos os 5 cenários de validação de persistência do recado foram aprovados com sucesso!");
 

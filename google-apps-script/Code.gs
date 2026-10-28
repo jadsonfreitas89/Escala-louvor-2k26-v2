@@ -656,8 +656,8 @@ function doPost(e) {
         var recData = recadosSheet.getDataRange().getValues();
         for (var r = 1; r < recData.length; r++) {
           if (String(recData[r][0] || "").trim() === targetId) {
-            recadosSheet.getRange(r + 1, 5).setValue("NAO");
-            return jsonResponse({ sucesso: true, id: targetId, mensagem: "Recado marcado como inativo na planilha." });
+            recadosSheet.deleteRow(r + 1);
+            return jsonResponse({ sucesso: true, id: targetId, mensagem: "Recado excluído permanentemente da planilha." });
           }
         }
       }

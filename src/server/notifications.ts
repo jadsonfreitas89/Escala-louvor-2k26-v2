@@ -1070,58 +1070,66 @@ export async function processarNotificacaoNovoRecado(
   integrantes: IntegranteRef[],
   origem: "APP" | "GOOGLE_SHEETS" = "APP"
 ): Promise<number> {
-  if (!recadoId) return 0;
-  let count = 0;
-
-  // 1. Notificação broadcast única para Todos (recados destinam-se a todos os membros)
-  const broadcastKey = `recado:${recadoId}:todos`;
-  const nTodos = criarNotificacaoSeNaoExiste({
-    destinatario: "Todos",
-    tipo: "NOVO_RECADO",
-    titulo: "Novo Recado",
-    mensagem: "ATENÇÃO! Tem um novo recado!",
-    eventoId: broadcastKey,
-    origem
-  });
-
-  const wasCreated = !!nTodos;
-  const notificationToPersist = nTodos || localNotificacoes.find(n => n.eventoId === broadcastKey);
+  if (!recadoId || !integrantes || integrantes.length === 0) return 0;
   
-  if (notificationToPersist) {
-    if (origem !== "GOOGLE_SHEETS") {
-      const persisted = await pushNotificacaoParaGas(notificationToPersist);
-      if (!persisted) {
-        throw new Error(`Falha ao persistir a notificação ${notificationToPersist.id} na aba NOTIFICAÇÕES do Google Sheets.`);
-      }
-    }
+  const notificacoesParaPersistir: NotificacaoRecord[] = [];
+  const notificacoesParaFcm: NotificacaoRecord[] = [];
 
-    if (wasCreated) {
-      count++;
-      sendFcmPushToUser("Todos", {
-        title: "Novo Recado",
-        body: "ATENÇÃO! Tem um novo recado!",
-        id: `notif_${recadoId}`,
-        eventoId: broadcastKey,
-        type: "NOVO_RECADO"
-      }).catch((err) => console.error("[FCM] Erro ao disparar push de recado:", err));
+  // 1. Cria notificações individuais para cada integrante
+  for (const integrante of integrantes) {
+    if (!integrante || !integrante.nome) continue;
+    const normNome = normalizarNome(integrante.nome);
+    const eventoId = `recado:${recadoId}:${normNome}`;
+    
+    const notif = criarNotificacaoSeNaoExiste({
+      destinatario: integrante.nome,
+      tipo: "NOVO_RECADO",
+      titulo: "Novo Recado",
+      mensagem: "ATENÇÃO! Tem um novo recado!",
+      eventoId: eventoId,
+      origem
+    });
+
+    if (notif) {
+      notificacoesParaPersistir.push(notif);
+      notificacoesParaFcm.push(notif);
     }
   }
 
-  if (count > 0) {
+  // 2. Persiste em lote no Sheets se houver algo a salvar
+  if (notificacoesParaPersistir.length > 0 && origem !== "GOOGLE_SHEETS") {
+    const persistido = await pushNotificacoesLoteParaGas(notificacoesParaPersistir);
+    if (!persistido) {
+      throw new Error(`Falha ao persistir notificações de recado ${recadoId} na aba NOTIFICAÇÕES do Google Sheets.`);
+    }
+  }
+
+  // 3. Dispara FCM após persistência confirmada
+  for (const notif of notificacoesParaFcm) {
+    sendFcmPushToUser(notif.destinatario, {
+      title: notif.titulo,
+      body: notif.mensagem,
+      id: notif.id,
+      eventoId: notif.eventoId || "",
+      type: notif.tipo
+    }).catch((err) => console.error(`[FCM] Erro ao disparar push de recado para ${notif.destinatario}:`, err));
+  }
+
+  if (notificacoesParaPersistir.length > 0) {
     logChangeDetector({
       aba: "RECADOS",
       linha: recadoId,
       alteracaoDetectada: "Novo recado inserido",
       estadoAnterior: "(vazio)",
       estadoAtual: `ID: ${recadoId}`,
-      eventoId: broadcastKey,
-      destinatarios: "Todos os integrantes",
+      eventoId: `recado:${recadoId}:...`,
+      destinatarios: `${integrantes.length} integrantes`,
       notificacaoCriada: "ATENÇÃO! Tem um novo recado!",
       origem
     });
   }
 
-  return count;
+  return notificacoesParaPersistir.length;
 }
 
 /**
