@@ -1084,25 +1084,28 @@ export async function processarNotificacaoNovoRecado(
     origem
   });
 
-  if (nTodos) {
-    count++;
-    // Aguarda obrigatoriamente a confirmação de persistência na aba NOTIFICAÇÕES do GAS
+  const wasCreated = !!nTodos;
+  const notificationToPersist = nTodos || localNotificacoes.find(n => n.eventoId === broadcastKey);
+  
+  if (notificationToPersist) {
     if (origem !== "GOOGLE_SHEETS") {
-      const persisted = await pushNotificacaoParaGas(nTodos);
+      const persisted = await pushNotificacaoParaGas(notificationToPersist);
       if (!persisted) {
-        console.warn(`[processarNotificacaoNovoRecado] Aviso: notificação do recado ${recadoId} não foi confirmada pelo Google Sheets.`);
+        throw new Error(`Falha ao persistir a notificação ${notificationToPersist.id} na aba NOTIFICAÇÕES do Google Sheets.`);
       }
     }
-  }
 
-  // 2. Dispara push FCM para todos após o fluxo de persistência
-  sendFcmPushToUser("Todos", {
-    title: "Novo Recado",
-    body: "ATENÇÃO! Tem um novo recado!",
-    id: `notif_${recadoId}`,
-    eventoId: broadcastKey,
-    type: "NOVO_RECADO"
-  }).catch((err) => console.error("[FCM] Erro ao disparar push de recado:", err));
+    if (wasCreated) {
+      count++;
+      sendFcmPushToUser("Todos", {
+        title: "Novo Recado",
+        body: "ATENÇÃO! Tem um novo recado!",
+        id: `notif_${recadoId}`,
+        eventoId: broadcastKey,
+        type: "NOVO_RECADO"
+      }).catch((err) => console.error("[FCM] Erro ao disparar push de recado:", err));
+    }
+  }
 
   if (count > 0) {
     logChangeDetector({

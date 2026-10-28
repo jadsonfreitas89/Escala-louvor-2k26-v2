@@ -1999,17 +1999,13 @@ export function createApiApp(): Express {
       }
 
       // Dispara notificação oficial para todos os integrantes SOMENTE após confirmação de sucesso na planilha
-      try {
-        if (cachedIntegrantes.length === 0) {
-          syncEscalaDataBackground();
-        }
-        const recadoId = result?.id || result?.recado?.id;
-        if (recadoId) {
-          await processarNotificacaoNovoRecado(recadoId, cachedIntegrantes);
-          registrarRecadoNoSnapshot(recadoId, String(titulo).trim());
-        }
-      } catch (notifErr) {
-        console.error("Erro ao disparar notificação de novo recado:", notifErr);
+      if (cachedIntegrantes.length === 0) {
+        syncEscalaDataBackground();
+      }
+      const recadoId = result?.id || result?.recado?.id;
+      if (recadoId) {
+        await processarNotificacaoNovoRecado(recadoId, cachedIntegrantes);
+        registrarRecadoNoSnapshot(recadoId, String(titulo).trim());
       }
 
       res.json(result);
