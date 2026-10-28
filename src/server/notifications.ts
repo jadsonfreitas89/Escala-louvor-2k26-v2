@@ -577,8 +577,11 @@ export function setGasApiUrlForNotifications(url: string) {
 /**
  * Envia notificação individual de forma não bloqueante para a aba NOTIFICAÇÕES do Google Sheets
  */
-export async function pushNotificacaoParaGas(notif: NotificacaoRecord) {
-  if (!gasApiUrlConfigured) return;
+export async function pushNotificacaoParaGas(notif: NotificacaoRecord): Promise<boolean> {
+  if (!gasApiUrlConfigured) {
+    console.warn("[pushNotificacaoParaGas] GAS_API_URL não configurada.");
+    return false;
+  }
   try {
     const form = new URLSearchParams({
       action: "criarNotificacao",
@@ -593,7 +596,7 @@ export async function pushNotificacaoParaGas(notif: NotificacaoRecord) {
       origem: notif.origem || "APP"
     });
 
-    await fetch(gasApiUrlConfigured, {
+    const response = await fetch(gasApiUrlConfigured, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -601,23 +604,45 @@ export async function pushNotificacaoParaGas(notif: NotificacaoRecord) {
       },
       body: form.toString()
     });
-  } catch (err) {
-    // Ignora erro em background
+
+    if (!response.ok) {
+      console.error(`[pushNotificacaoParaGas] Erro HTTP ${response.status} ao sincronizar notificação ${notif.id}: ${response.statusText}`);
+      return false;
+    }
+
+    const textBody = await response.text();
+    let result: any;
+    try {
+      result = JSON.parse(textBody);
+    } catch (parseErr) {
+      console.error(`[pushNotificacaoParaGas] Falha ao parsear JSON de resposta para notificação ${notif.id}:`, parseErr, textBody.substring(0, 200));
+      return false;
+    }
+
+    if (!result || result.sucesso !== true) {
+      console.warn(`[pushNotificacaoParaGas] Google Apps Script retornou sucesso: false para notificação ${notif.id}:`, result);
+      return false;
+    }
+
+    return true;
+  } catch (err: any) {
+    console.error(`[pushNotificacaoParaGas] Exceção de rede ao enviar notificação ${notif.id} para o GAS:`, err?.message || err);
+    return false;
   }
 }
 
 /**
- * Envia lote de notificações para a aba NOTIFICAÇÕES do Google Sheets
+ * Envia lote de notificações para a aba NOTIFICAÇÕES do Google Sheets com tratamento rastreável
  */
-export async function pushNotificacoesLoteParaGas(notifs: NotificacaoRecord[]) {
-  if (!gasApiUrlConfigured || !notifs || notifs.length === 0) return;
+export async function pushNotificacoesLoteParaGas(notifs: NotificacaoRecord[]): Promise<boolean> {
+  if (!gasApiUrlConfigured || !notifs || notifs.length === 0) return false;
   try {
     const form = new URLSearchParams({
       action: "salvarNotificacoesEmLote",
       notificacoes: JSON.stringify(notifs)
     });
 
-    await fetch(gasApiUrlConfigured, {
+    const response = await fetch(gasApiUrlConfigured, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -625,8 +650,30 @@ export async function pushNotificacoesLoteParaGas(notifs: NotificacaoRecord[]) {
       },
       body: form.toString()
     });
-  } catch (err) {
-    // Ignora erro em background
+
+    if (!response.ok) {
+      console.error(`[pushNotificacoesLoteParaGas] Erro HTTP ${response.status}: ${response.statusText}`);
+      return false;
+    }
+
+    const textBody = await response.text();
+    let result: any;
+    try {
+      result = JSON.parse(textBody);
+    } catch (parseErr) {
+      console.error("[pushNotificacoesLoteParaGas] Falha ao parsear JSON:", parseErr);
+      return false;
+    }
+
+    if (!result || result.sucesso !== true) {
+      console.warn("[pushNotificacoesLoteParaGas] GAS retornou sucesso: false:", result);
+      return false;
+    }
+
+    return true;
+  } catch (err: any) {
+    console.error("[pushNotificacoesLoteParaGas] Exceção:", err?.message || err);
+    return false;
   }
 }
 
