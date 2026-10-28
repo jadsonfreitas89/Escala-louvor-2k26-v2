@@ -1065,11 +1065,11 @@ export function processarLembretesDeCulto(
  * Mensagem: "ATENÇÃO! Tem um novo recado!"
  * Chave: recado:{recadoId}:{destinatario}
  */
-export function processarNotificacaoNovoRecado(
+export async function processarNotificacaoNovoRecado(
   recadoId: string,
   integrantes: IntegranteRef[],
   origem: "APP" | "GOOGLE_SHEETS" = "APP"
-): number {
+): Promise<number> {
   if (!recadoId) return 0;
   let count = 0;
 
@@ -1083,9 +1083,19 @@ export function processarNotificacaoNovoRecado(
     eventoId: broadcastKey,
     origem
   });
-  if (nTodos) count++;
 
-  // 2. Dispara push FCM para todos
+  if (nTodos) {
+    count++;
+    // Aguarda obrigatoriamente a confirmação de persistência na aba NOTIFICAÇÕES do GAS
+    if (origem !== "GOOGLE_SHEETS") {
+      const persisted = await pushNotificacaoParaGas(nTodos);
+      if (!persisted) {
+        console.warn(`[processarNotificacaoNovoRecado] Aviso: notificação do recado ${recadoId} não foi confirmada pelo Google Sheets.`);
+      }
+    }
+  }
+
+  // 2. Dispara push FCM para todos após o fluxo de persistência
   sendFcmPushToUser("Todos", {
     title: "Novo Recado",
     body: "ATENÇÃO! Tem um novo recado!",

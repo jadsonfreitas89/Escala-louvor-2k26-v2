@@ -2005,7 +2005,7 @@ export function createApiApp(): Express {
         }
         const recadoId = result?.id || result?.recado?.id;
         if (recadoId) {
-          processarNotificacaoNovoRecado(recadoId, cachedIntegrantes);
+          await processarNotificacaoNovoRecado(recadoId, cachedIntegrantes);
           registrarRecadoNoSnapshot(recadoId, String(titulo).trim());
         }
       } catch (notifErr) {

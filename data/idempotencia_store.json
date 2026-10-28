@@ -2,22 +2,22 @@
   "lembrete-louvores:2026_10_28:joao_silva:11": {
     "eventKey": "lembrete-louvores:2026_10_28:joao_silva:11",
     "status": "sent",
-    "createdAt": "2026-10-28T16:37:41.262Z",
-    "updatedAt": "2026-10-28T16:37:41.262Z",
-    "notificationId": "52b2ddc6-1f34-483f-a719-f3e54ffcc401"
+    "createdAt": "2026-10-28T17:34:58.332Z",
+    "updatedAt": "2026-10-28T17:34:58.332Z",
+    "notificationId": "291f6197-5787-4fa6-9b45-e223f8ab2d47"
   },
   "lembrete-louvores:2026_10_28:maria_santos:11": {
     "eventKey": "lembrete-louvores:2026_10_28:maria_santos:11",
     "status": "sent",
-    "createdAt": "2026-10-28T16:37:41.262Z",
-    "updatedAt": "2026-10-28T16:37:41.262Z",
-    "notificationId": "fc6423dc-0709-4bf2-b3a5-db4d9c3f2d78"
+    "createdAt": "2026-10-28T17:34:58.338Z",
+    "updatedAt": "2026-10-28T17:34:58.338Z",
+    "notificationId": "83f44d1b-557a-49c8-b9c5-cdb920e87134"
   },
   "recado:rec_999:todos:joao silva": {
     "eventKey": "recado:rec_999:todos:joao silva",
     "status": "fcm_dispatched",
-    "createdAt": "2026-10-28T16:37:41.263Z",
-    "updatedAt": "2026-10-28T16:37:41.264Z",
+    "createdAt": "2026-10-28T17:34:58.339Z",
+    "updatedAt": "2026-10-28T17:34:58.340Z",
     "destinatario": "João Silva",
     "tipo": "NOVO_RECADO",
     "fcmMessageId": "fcm_msg_joao"
@@ -25,24 +25,24 @@
   "recado:rec_999:todos:maria santos": {
     "eventKey": "recado:rec_999:todos:maria santos",
     "status": "pending",
-    "createdAt": "2026-10-28T16:37:41.264Z",
-    "updatedAt": "2026-10-28T16:37:41.264Z",
+    "createdAt": "2026-10-28T17:34:58.340Z",
+    "updatedAt": "2026-10-28T17:34:58.340Z",
     "destinatario": "Maria Santos",
     "tipo": "NOVO_RECADO"
   },
   "test:falha:key_456": {
     "eventKey": "test:falha:key_456",
     "status": "pending",
-    "createdAt": "2026-10-28T16:37:41.265Z",
-    "updatedAt": "2026-10-28T16:37:41.265Z",
+    "createdAt": "2026-10-28T17:34:58.341Z",
+    "updatedAt": "2026-10-28T17:34:58.341Z",
     "destinatario": "Maria",
     "tipo": "TESTE"
   },
   "test:fcm_dispatched:key_789": {
     "eventKey": "test:fcm_dispatched:key_789",
     "status": "fcm_dispatched",
-    "createdAt": "2026-10-28T16:37:41.265Z",
-    "updatedAt": "2026-10-28T16:37:41.265Z",
+    "createdAt": "2026-10-28T17:34:58.341Z",
+    "updatedAt": "2026-10-28T17:34:58.341Z",
     "destinatario": "Pedro",
     "tipo": "TESTE",
     "fcmMessageId": "msg_id_fcm_abc123"
