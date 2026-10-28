@@ -2,6 +2,12 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { getTituloCulto } from "../utils/cultoUtils";
+import {
+  reserveEventAtomic,
+  markEventSent,
+  markEventFailed,
+  getEventStatus
+} from "./idempotencyStore";
 
 export interface NotificacaoRecord {
   id: string;
@@ -770,7 +776,19 @@ export function getNotificacoesParaUsuario(nomeUsuario: string): NotificacaoReco
     }
 
     // Deduplicação lógica por eventoId ou ID para o mesmo usuário
-    const key = n.eventoId ? `evt:${n.eventoId.trim()}` : `id:${n.id.trim()}`;
+    let key = n.eventoId ? `evt:${n.eventoId.trim()}` : `id:${n.id.trim()}`;
+
+    // Normalização estrita para recados: recado:{recadoId}:{destinatario} -> evt:recado:{recadoId}
+    if (n.eventoId) {
+      const cleanEvt = n.eventoId.trim().toLowerCase();
+      if (cleanEvt.startsWith("recado:")) {
+        const parts = cleanEvt.split(":");
+        if (parts.length >= 2 && parts[1]) {
+          key = `evt:recado:${parts[1]}`;
+        }
+      }
+    }
+
     if (seenKeys.has(key)) {
       continue;
     }
@@ -790,25 +808,25 @@ export function getNotificacoesParaUsuario(nomeUsuario: string): NotificacaoReco
 /**
  * Marca notificação como lida por ID ou EventoId
  */
-export function marcarComoLidaLocal(idOrEventoId: string): boolean {
+export function marcarComoLidaLocal(idOrEventoId: string): { sucesso: boolean; item?: NotificacaoRecord } {
   const clean = String(idOrEventoId || "").trim();
-  if (!clean) return false;
-  let found = false;
+  if (!clean) return { sucesso: false };
+  let foundItem: NotificacaoRecord | undefined = undefined;
   for (const n of localNotificacoes) {
     if (n.id === clean || (n.eventoId && n.eventoId === clean)) {
       n.lida = "SIM";
       registrarChavesComoLidas({ id: n.id, eventoId: n.eventoId, destinatario: n.destinatario });
-      found = true;
+      if (!foundItem) foundItem = n;
     }
   }
   // Registra a chave genérica também
   registrarChavesComoLidas({ id: clean, eventoId: clean });
 
-  if (found) {
+  if (foundItem) {
     saveNotifications();
-    return true;
+    return { sucesso: true, item: foundItem };
   }
-  return true;
+  return { sucesso: true };
 }
 
 /**
@@ -880,110 +898,115 @@ export function processarLembretesDeCulto(
     return 0;
   }
 
-  // Identifica os slots do dia que já chegaram
+  // Identifica todos os slots do dia que já venceram
   const validSlots = slots.filter((s) => totalMinutes >= s.slotMinutes);
   if (validSlots.length === 0) return 0;
 
-  // Usa o slot mais recente ativo no momento
-  const currentSlot = validSlots[validSlots.length - 1];
-  const slotHour = currentSlot.slot.split(":")[0];
-  const slotCode = currentSlot.slot.replace(":", "-");
-  const cleanDateStr = isoDate.replace(/-/g, "_");
+  let totalCriadas = 0;
 
-  // Se for Quarta-feira: lembrete de louvores por horário
-  if (currentSlot.isWednesdayLouvores) {
-    let totalCriadas = 0;
+  for (const currentSlot of validSlots) {
+    const slotHour = currentSlot.slot.split(":")[0];
+    const slotCode = currentSlot.slot.replace(":", "-");
+    const cleanDateStr = isoDate.replace(/-/g, "_");
+
+    // Se for Quarta-feira: lembrete de louvores por horário
+    if (currentSlot.isWednesdayLouvores) {
+      for (const integrante of integrantes) {
+        if (!integrante || !integrante.nome) continue;
+        const normUser = normalizarNome(integrante.nome).replace(/\s+/g, "_");
+        const eventoId = `lembrete-louvores:${cleanDateStr}:${normUser}:${slotHour}`;
+
+        const notif = criarNotificacaoSeNaoExiste({
+          destinatario: integrante.nome,
+          tipo: "LEMBRETE_LOUVORES",
+          titulo: "Louvores para o Culto",
+          mensagem: `${integrante.nome}, a Paz! Lembramos que os louvores já estão disponíveis no aplicativo!`,
+          eventoId,
+          origem: "APP"
+        });
+
+        if (notif) {
+          totalCriadas++;
+          markEventSent(eventoId, notif.id).catch(() => {});
+          sendFcmPushToUser(integrante.nome, {
+            title: notif.titulo,
+            body: notif.mensagem,
+            id: notif.id,
+            eventoId: notif.eventoId,
+            type: notif.tipo
+          }).catch((err) => {
+            console.error("[FCM] Erro ao disparar push lembrete louvores:", err);
+            markEventFailed(eventoId, err?.message || "FCM Error").catch(() => {});
+          });
+        }
+      }
+      continue;
+    }
+
+    const escalaHoje = escalas.find((e) => {
+      if (!e || !e.data) return false;
+      const cleanE = e.data.trim().replace(/[^0-9/]/g, "");
+      const cleanHoje = dateStr.replace(/[^0-9/]/g, "");
+      return cleanE === cleanHoje;
+    });
+
+    if (!escalaHoje) {
+      continue;
+    }
+
+    const nomeCulto = getTituloCulto(escalaHoje.data);
+    const membrosEscalados = extrairMembrosDaEscala(escalaHoje);
+
     for (const integrante of integrantes) {
       if (!integrante || !integrante.nome) continue;
       const normUser = normalizarNome(integrante.nome).replace(/\s+/g, "_");
-      // Chave estrita: lembrete-louvores:{eventoId}:{destinatario}:{horario}
-      const eventoId = `lembrete-louvores:${cleanDateStr}:${normUser}:${slotHour}`;
+      const eventoId = `culto:${cleanDateStr}_${slotCode}:${normUser}`;
+
+      const membroInfo = membrosEscalados.find(
+        (m) => normalizarNome(m.nome) === normalizarNome(integrante.nome)
+      );
+      const estaEscalado = Boolean(membroInfo) || isUserInEscala(escalaHoje, integrante.nome);
+
+      let titulo: string;
+      let mensagem: string;
+      let tipo: string;
+
+      if (estaEscalado) {
+        titulo = `${nomeCulto} Hoje`;
+        const detalheFuncao = membroInfo
+          ? (membroInfo.instrumento ? `${membroInfo.funcao} (${membroInfo.instrumento})` : membroInfo.funcao)
+          : "a equipe";
+        mensagem = `${integrante.nome}, a Paz! Hoje tem ${nomeCulto} e você está escalado(a) como ${detalheFuncao}!`;
+        tipo = "CULTO";
+      } else {
+        titulo = `Lembrete - ${nomeCulto}`;
+        mensagem = `Olha que benção! Passando pra lembrar que hoje tem ${nomeCulto}!`;
+        tipo = "LEMBRETE";
+      }
 
       const notif = criarNotificacaoSeNaoExiste({
         destinatario: integrante.nome,
-        tipo: "LEMBRETE_LOUVORES",
-        titulo: "Louvores para o Culto",
-        mensagem: `${integrante.nome}, a Paz! Lembramos que os louvores já estão disponíveis no aplicativo!`,
+        tipo,
+        titulo,
+        mensagem,
         eventoId,
         origem: "APP"
       });
 
       if (notif) {
         totalCriadas++;
+        markEventSent(eventoId, notif.id).catch(() => {});
         sendFcmPushToUser(integrante.nome, {
           title: notif.titulo,
           body: notif.mensagem,
           id: notif.id,
           eventoId: notif.eventoId,
           type: notif.tipo
-        }).catch((err) => console.error("[FCM] Erro ao disparar push lembrete louvores:", err));
+        }).catch((err) => {
+          console.error("[FCM] Erro ao disparar push de culto:", err);
+          markEventFailed(eventoId, err?.message || "FCM Error").catch(() => {});
+        });
       }
-    }
-    return totalCriadas;
-  }
-
-  const escalaHoje = escalas.find((e) => {
-    if (!e || !e.data) return false;
-    const cleanE = e.data.trim().replace(/[^0-9/]/g, "");
-    const cleanHoje = dateStr.replace(/[^0-9/]/g, "");
-    return cleanE === cleanHoje;
-  });
-
-  if (!escalaHoje) {
-    return 0;
-  }
-
-  const nomeCulto = getTituloCulto(escalaHoje.data);
-  const membrosEscalados = extrairMembrosDaEscala(escalaHoje);
-  let totalCriadas = 0;
-
-  for (const integrante of integrantes) {
-    if (!integrante || !integrante.nome) continue;
-    const normUser = normalizarNome(integrante.nome).replace(/\s+/g, "_");
-
-    // Chave estrita: culto:{eventoId}:{destinatario}
-    const eventoId = `culto:${cleanDateStr}_${slotCode}:${normUser}`;
-
-    const membroInfo = membrosEscalados.find(
-      (m) => normalizarNome(m.nome) === normalizarNome(integrante.nome)
-    );
-    const estaEscalado = Boolean(membroInfo) || isUserInEscala(escalaHoje, integrante.nome);
-
-    let titulo: string;
-    let mensagem: string;
-    let tipo: string;
-
-    if (estaEscalado) {
-      titulo = `${nomeCulto} Hoje`;
-      const detalheFuncao = membroInfo
-        ? (membroInfo.instrumento ? `${membroInfo.funcao} (${membroInfo.instrumento})` : membroInfo.funcao)
-        : "a equipe";
-      mensagem = `${integrante.nome}, a Paz! Hoje tem ${nomeCulto} e você está escalado(a) como ${detalheFuncao}!`;
-      tipo = "CULTO";
-    } else {
-      titulo = `Lembrete - ${nomeCulto}`;
-      mensagem = `Olha que benção! Passando pra lembrar que hoje tem ${nomeCulto}!`;
-      tipo = "LEMBRETE";
-    }
-
-    const notif = criarNotificacaoSeNaoExiste({
-      destinatario: integrante.nome,
-      tipo,
-      titulo,
-      mensagem,
-      eventoId,
-      origem: "APP"
-    });
-
-    if (notif) {
-      totalCriadas++;
-      sendFcmPushToUser(integrante.nome, {
-        title: notif.titulo,
-        body: notif.mensagem,
-        id: notif.id,
-        eventoId: notif.eventoId,
-        type: notif.tipo
-      }).catch((err) => console.error("[FCM] Erro ao disparar push de culto:", err));
     }
   }
 
@@ -1003,7 +1026,7 @@ export function processarNotificacaoNovoRecado(
   if (!recadoId) return 0;
   let count = 0;
 
-  // 1. Notificação broadcast para Todos
+  // 1. Notificação broadcast única para Todos (recados destinam-se a todos os membros)
   const broadcastKey = `recado:${recadoId}:todos`;
   const nTodos = criarNotificacaoSeNaoExiste({
     destinatario: "Todos",
@@ -1015,23 +1038,7 @@ export function processarNotificacaoNovoRecado(
   });
   if (nTodos) count++;
 
-  // 2. Notificações específicas por integrante
-  for (const integrante of (integrantes || [])) {
-    if (!integrante || !integrante.nome) continue;
-    const normUser = normalizarNome(integrante.nome).replace(/\s+/g, "_");
-    const userKey = `recado:${recadoId}:${normUser}`;
-    const n = criarNotificacaoSeNaoExiste({
-      destinatario: integrante.nome,
-      tipo: "NOVO_RECADO",
-      titulo: "Novo Recado",
-      mensagem: "ATENÇÃO! Tem um novo recado!",
-      eventoId: userKey,
-      origem
-    });
-    if (n) count++;
-  }
-
-  // 3. Dispara push FCM para todos
+  // 2. Dispara push FCM para todos
   sendFcmPushToUser("Todos", {
     title: "Novo Recado",
     body: "ATENÇÃO! Tem um novo recado!",
@@ -1172,7 +1179,7 @@ export function processarNotificacaoNovaSolicitacao(params: {
 
   const lideres = integrantes.filter((i) => {
     const f = (i.funcao || "").toLowerCase();
-    return f.includes("lider");
+    return f.includes("lider") || f.includes("líder");
   });
 
   let count = 0;
@@ -1182,8 +1189,8 @@ export function processarNotificacaoNovaSolicitacao(params: {
     const n = criarNotificacaoSeNaoExiste({
       destinatario: lider.nome,
       tipo: "SOLICITACAO_NOVA",
-      titulo: "Solicitação de Troca",
-      mensagem: `Olá Lider, ${quemPediu} fez um solicitação de troca!`,
+      titulo: "Nova solicitação de troca",
+      mensagem: "Nova solicitação de troca",
       eventoId: userKey,
       origem
     });
@@ -1205,12 +1212,9 @@ export function processarNotificacaoNovaSolicitacao(params: {
 /**
  * 5 & 6. Decisão de Solicitação de Troca (Aprovada ou Recusada)
  * - APROVADA:
- *   Solicitante: "A Paz (nome)! Sua solicitação foi aprovada!"
- *   Substituto: "A Paz (nome)! Nova escala pra você!"
+ *   Notifica integrantes afetados (solicitante + substituto): "Escala atualizada"
  * - RECUSADA:
- *   Solicitante: "A Paz (nome)! Solicitação NÃO aprovada!"
- *   Substituto: "A Paz (nome)! Sem alteração na escala!"
- * Chave: troca:{solicitacaoId}:{tipo}:{destinatario}
+ *   Notifica somente quem solicitou: "Troca Recusada"
  */
 export function processarNotificacaoDecisaoSolicitacao(params: {
   solicitacaoId: string;
@@ -1228,13 +1232,13 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
   let count = 0;
 
   if (acao === "APROVAR") {
-    // Solicitante
-    const keySolic = `troca:${safeId}:aprovada_solic:${normPediu}`;
+    // 1. Solicitante
+    const keySolic = `troca:${safeId}:escala_atualizada:${normPediu}`;
     const n1 = criarNotificacaoSeNaoExiste({
       destinatario: quemPediu,
-      tipo: "SOLICITACAO_APROVADA",
-      titulo: "Solicitação Aprovada",
-      mensagem: `A Paz ${quemPediu}! Sua solicitação foi aprovada!`,
+      tipo: "ESCALA_ATUALIZADA",
+      titulo: "Escala Atualizada",
+      mensagem: "Escala atualizada",
       eventoId: keySolic,
       origem
     });
@@ -1249,14 +1253,14 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
       }).catch(() => {});
     }
 
-    // Substituto
+    // 2. Substituto afetado
     if (substituto) {
-      const keySubst = `troca:${safeId}:aprovada_subst:${normSubst}`;
+      const keySubst = `troca:${safeId}:escala_atualizada:${normSubst}`;
       const n2 = criarNotificacaoSeNaoExiste({
         destinatario: substituto,
-        tipo: "SOLICITACAO_APROVADA",
-        titulo: "Nova Escala Atribuída",
-        mensagem: `A Paz ${substituto}! Nova escala pra você!`,
+        tipo: "ESCALA_ATUALIZADA",
+        titulo: "Escala Atualizada",
+        mensagem: "Escala atualizada",
         eventoId: keySubst,
         origem
       });
@@ -1280,17 +1284,17 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
       estadoAtual: "APROVADA",
       eventoId: `troca:${safeId}:aprovada`,
       destinatarios: `${quemPediu}, ${substituto}`,
-      notificacaoCriada: `Solicitante: Aprovada / Substituto: Nova Escala`,
+      notificacaoCriada: "Escala atualizada",
       origem
     });
   } else if (acao === "RECUSAR") {
-    // Solicitante
+    // Notifica SOMENTE quem solicitou
     const keySolic = `troca:${safeId}:recusada_solic:${normPediu}`;
     const n1 = criarNotificacaoSeNaoExiste({
       destinatario: quemPediu,
       tipo: "SOLICITACAO_RECUSADA",
-      titulo: "Solicitação Recusada",
-      mensagem: `A Paz ${quemPediu}! Solicitação NÃO aprovada!`,
+      titulo: "Troca Recusada",
+      mensagem: "Troca Recusada",
       eventoId: keySolic,
       origem
     });
@@ -1305,38 +1309,15 @@ export function processarNotificacaoDecisaoSolicitacao(params: {
       }).catch(() => {});
     }
 
-    // Substituto
-    if (substituto) {
-      const keySubst = `troca:${safeId}:recusada_subst:${normSubst}`;
-      const n2 = criarNotificacaoSeNaoExiste({
-        destinatario: substituto,
-        tipo: "SOLICITACAO_RECUSADA",
-        titulo: "Solicitação Não Aprovada",
-        mensagem: `A Paz ${substituto}! Sem alteração na escala!`,
-        eventoId: keySubst,
-        origem
-      });
-      if (n2) {
-        count++;
-        sendFcmPushToUser(substituto, {
-          title: n2.titulo,
-          body: n2.mensagem,
-          id: n2.id,
-          eventoId: n2.eventoId,
-          type: n2.tipo
-        }).catch(() => {});
-      }
-    }
-
     logChangeDetector({
       aba: "SOLICITAÇÕES",
       data: dataEscala,
-      alteracaoDetectada: `Solicitação Recusada (Solicitante: ${quemPediu}, Substituto: ${substituto})`,
+      alteracaoDetectada: `Solicitação Recusada (Solicitante: ${quemPediu})`,
       estadoAnterior: "PENDENTE",
       estadoAtual: "RECUSADA",
       eventoId: `troca:${safeId}:recusada`,
-      destinatarios: `${quemPediu}, ${substituto}`,
-      notificacaoCriada: `Solicitante: NÃO aprovada / Substituto: Sem alteração`,
+      destinatarios: quemPediu,
+      notificacaoCriada: "Troca Recusada",
       origem
     });
   }
@@ -1822,14 +1803,24 @@ export function detectarAlteracoesNaPlanilha(params: {
   const novosRecadosSnapshot: Record<string, { id: string; titulo: string; ativo: string }> = {};
   for (const rec of recadosAtuais) {
     if (!rec || !rec.id) continue;
-    const recId = rec.id;
+    const recId = String(rec.id).trim();
     const ativoAtual = (rec.ativo || "SIM").toUpperCase();
     const recAntigo = currentSnapshot.recados[recId];
 
     if (!recAntigo && ativoAtual === "SIM") {
-      const count = processarNotificacaoNovoRecado(recId, integrantes, origem);
-      totalNotificacoes += count;
-      eventosDetectados.push(`NOVO_RECADO_${recId}`);
+      const cleanRecId = recId.toLowerCase();
+      // Verifica se já existe qualquer notificação com este recadoId no eventoId para evitar disparo duplo
+      const jaExisteNotif = localNotificacoes.some((n) => {
+        if (!n.eventoId) return false;
+        const normEvt = n.eventoId.trim().toLowerCase();
+        return normEvt.startsWith(`recado:${cleanRecId}`);
+      });
+
+      if (!jaExisteNotif) {
+        const count = processarNotificacaoNovoRecado(recId, integrantes, origem);
+        totalNotificacoes += count;
+        eventosDetectados.push(`NOVO_RECADO_${recId}`);
+      }
     }
 
     novosRecadosSnapshot[recId] = {
@@ -1847,6 +1838,22 @@ export function detectarAlteracoesNaPlanilha(params: {
 }
 
 /**
+ * Registra um recado criado pela API diretamente no snapshot para prevenir re-disparo pelo detector de alterações
+ */
+export function registrarRecadoNoSnapshot(recadoId: string, titulo: string = "") {
+  if (!recadoId) return;
+  if (!currentSnapshot.recados) {
+    currentSnapshot.recados = {};
+  }
+  currentSnapshot.recados[recadoId] = {
+    id: recadoId,
+    titulo: titulo || "",
+    ativo: "SIM"
+  };
+  saveSheetsSnapshot();
+}
+
+/**
  * Reseta o snapshot em memória para testes controlados
  */
 export function resetSnapshotForTesting() {
@@ -1857,5 +1864,13 @@ export function resetSnapshotForTesting() {
     solicitacoes: {},
     recados: {}
   };
+}
+
+/**
+ * Reseta as notificações em memória para testes controlados
+ */
+export function clearNotificationsForTesting() {
+  localNotificacoes.length = 0;
+  markedReadKeys.clear();
 }
 

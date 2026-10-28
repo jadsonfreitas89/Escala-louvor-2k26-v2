@@ -2,6 +2,12 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "crons": [
+    {
+      "path": "/api/notificacoes/cron",
+      "schedule": "0 12 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",

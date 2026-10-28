@@ -531,21 +531,50 @@ function doPost(e) {
     // 5. MARCAR NOTIFICAÇÃO COMO LIDA
     if (action === "marcarNotificacaoLida" || action === "marcarTodasNotificacoesLidas") {
       var notifSheet = ss.getSheetByName(ABA_NOTIFICACOES);
+      var matchFound = false;
       if (notifSheet) {
         var nData = notifSheet.getDataRange().getValues();
         var targetId = String(params.id || "").trim();
         var targetDest = normalizarNome(params.destinatario || params.nome);
+        var targetEventoId = String(params.eventoId || "").trim();
 
         for (var ni = 1; ni < nData.length; ni++) {
           var rowId = String(nData[ni][0] || "").trim();
           var rowDest = normalizarNome(nData[ni][1]);
+          var rowEventoId = String(nData[ni][7] || "").trim();
 
-          if (action === "marcarNotificacaoLida" && (rowId === targetId || (rowDest === targetDest && nData[ni][7] === params.eventoId))) {
+          var matchSingle = false;
+          if (action === "marcarNotificacaoLida") {
+            // Prioridade 1: ID exato da notificação
+            if (targetId && rowId === targetId) {
+              matchSingle = true;
+            } 
+            // Prioridade 2: Evento ID com filtro de destinatário compatível
+            else if (targetEventoId && rowEventoId && targetEventoId.toLowerCase() === rowEventoId.toLowerCase()) {
+              if (targetDest && rowDest) {
+                if (rowDest === targetDest || rowDest === "todos" || targetDest === "todos") {
+                  matchSingle = true;
+                }
+              } else {
+                matchSingle = true;
+              }
+            }
+          }
+
+          var matchAll = action === "marcarTodasNotificacoesLidas" && (rowDest === targetDest || targetDest === "todos" || rowDest === "todos");
+
+          if (matchSingle || matchAll) {
             notifSheet.getRange(ni + 1, 7).setValue("SIM");
-          } else if (action === "marcarTodasNotificacoesLidas" && (rowDest === targetDest || targetDest === "todos")) {
-            notifSheet.getRange(ni + 1, 7).setValue("SIM");
+            matchFound = true;
+            // Interrompe imediatamente para buscas individuais determinísticas
+            if (action === "marcarNotificacaoLida") {
+              break;
+            }
           }
         }
+      }
+      if (action === "marcarNotificacaoLida" && !matchFound) {
+        return jsonResponse({ sucesso: false, mensagem: "Notificação não encontrada na planilha." });
       }
       return jsonResponse({ sucesso: true, mensagem: "Notificações marcadas como lidas." });
     }
@@ -825,21 +854,23 @@ function detectAndProcessSheetChanges(origem) {
   }
 
   // COMPARAÇÃO RECADOS
+  // REGRA DE OURO: Usar eventoId canônico (recado:{recadoId}:todos).
+  // Se o recado foi criado pelo APP, o backend já registrou eventoId recado:{recadoId}:todos na aba NOTIFICAÇÕES.
+  // criarNotificacaoNoSheets verifica se o eventoId já existe e evita duplicatas.
   for (var rKey in currentRecados) {
     var recNovo = currentRecados[rKey];
     var recAntigo = previousSnapshot.recados ? previousSnapshot.recados[rKey] : null;
 
     if (!recAntigo && recNovo.ativo === "SIM") {
-      for (var intIdx = 0; intIdx < integrantesList.length; intIdx++) {
-        criarNotificacaoNoSheets({
-          destinatario: integrantesList[intIdx].nome,
-          tipo: "NOVO_RECADO",
-          titulo: "Novo Recado",
-          mensagem: "ATENÇÃO! Tem um novo recado!",
-          eventoId: "NOVO_RECADO_" + rKey,
-          origem: origem
-        });
-      }
+      var canonicalEvtId = "recado:" + rKey + ":todos";
+      criarNotificacaoNoSheets({
+        destinatario: "Todos",
+        tipo: "NOVO_RECADO",
+        titulo: "Novo Recado",
+        mensagem: "ATENÇÃO! Tem um novo recado!",
+        eventoId: canonicalEvtId,
+        origem: origem
+      });
     }
   }
 

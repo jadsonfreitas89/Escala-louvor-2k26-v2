@@ -4,6 +4,7 @@ import { getDb } from "./db";
 import { getFirebaseAdminApp } from "./firebaseAdmin";
 import { getMessaging } from "firebase-admin/messaging";
 import { normalizarNome, destinatarioPertenceAoUsuario } from "./notifications";
+import { markEventFcmDispatched } from "./idempotencyStore";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const FCM_TOKENS_FILE = path.join(DATA_DIR, "fcm_tokens.json");
@@ -237,6 +238,10 @@ export async function sendFcmPushToUser(userId: string, options: FcmPayloadOptio
       }
       failed++;
     }
+  }
+
+  if (sent > 0 && options.eventoId) {
+    await markEventFcmDispatched(options.eventoId).catch(() => {});
   }
 
   return { sent, failed };

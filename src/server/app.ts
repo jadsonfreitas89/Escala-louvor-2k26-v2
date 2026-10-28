@@ -13,6 +13,7 @@ import {
   mergeGasNotifications,
   processarLembretesDeCulto,
   processarNotificacaoNovoRecado,
+  registrarRecadoNoSnapshot,
   processarNotificacaoNovaEscala,
   processarNotificacaoNovaSolicitacao,
   processarNotificacaoDecisaoSolicitacao,
@@ -1984,6 +1985,7 @@ export function createApiApp(): Express {
         }
         const recadoId = result?.id || result?.recado?.id || `rec_${Date.now()}`;
         processarNotificacaoNovoRecado(recadoId, cachedIntegrantes);
+        registrarRecadoNoSnapshot(recadoId, String(titulo).trim());
       } catch (notifErr) {
         console.error("Erro ao disparar notificação de novo recado:", notifErr);
       }
@@ -2176,13 +2178,16 @@ export function createApiApp(): Express {
       }
 
       // Marca localmente
-      marcarComoLidaLocal(notifId.trim());
+      const resultLocal = marcarComoLidaLocal(notifId.trim());
+      const notifItem = resultLocal.item;
 
       // Repassa ao Google Apps Script de forma resiliente
       try {
         const form = new URLSearchParams({
           action: "marcarNotificacaoLida",
           id: notifId.trim(),
+          eventoId: notifItem?.eventoId || req.body?.eventoId || "",
+          destinatario: notifItem?.destinatario || user.nome.trim(),
           nome: user.nome.trim(),
           senha: user.rawPassword || ""
         });
@@ -2214,6 +2219,49 @@ export function createApiApp(): Express {
 
   app.put("/api/notificacoes/:id/lida", authenticateToken, handleMarcarNotifLida);
   app.post("/api/notificacoes/:id/lida", authenticateToken, handleMarcarNotifLida);
+
+  /**
+   * GET e POST /api/notificacoes/cron
+   * Executa a checagem e disparo de lembretes de culto (Vercel Cron ou on-demand)
+   */
+  const handleCronLembretes = async (req: Request, res: Response) => {
+    try {
+      const cronSecret = process.env.CRON_SECRET;
+      const authHeader = req.headers.authorization;
+
+      if (!cronSecret || !authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({
+          sucesso: false,
+          mensagem: "Acesso não autorizado ao endpoint cron."
+        });
+      }
+
+      const token = authHeader.substring(7).trim();
+      if (token !== cronSecret) {
+        return res.status(401).json({
+          sucesso: false,
+          mensagem: "Token de autorização inválido."
+        });
+      }
+
+      if (cachedEscalas.length === 0 || cachedIntegrantes.length === 0) {
+        await syncEscalaDataBackground("GOOGLE_SHEETS");
+      }
+      const disparados = processarLembretesDeCulto(cachedEscalas, cachedIntegrantes);
+      res.json({
+        sucesso: true,
+        mensagem: "Lembretes de culto processados com sucesso.",
+        totalDisparados: disparados,
+        timestamp: new Date().toISOString()
+      });
+    } catch (err: any) {
+      console.error("Erro no endpoint cron de lembretes:", err);
+      res.status(500).json({ sucesso: false, mensagem: err.message || "Erro ao processar lembretes." });
+    }
+  };
+
+  app.get("/api/notificacoes/cron", handleCronLembretes);
+  app.post("/api/notificacoes/cron", handleCronLembretes);
 
   /**
    * POST /api/notificacoes/marcar-todas-lidas

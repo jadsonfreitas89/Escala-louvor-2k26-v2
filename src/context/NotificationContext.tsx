@@ -199,6 +199,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const triggerBrowserNotification = useCallback((notif: Notificacao) => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
     if (Notification.permission !== 'granted') return;
+    // Se o documento estiver visível/focado, o popup interno da UI (activePopup) já é exibido.
+    // Evita duplicar notificação nativa do SO quando o usuário está com o app aberto.
+    if (typeof document !== 'undefined' && !document.hidden) return;
 
     const title = notif.titulo || 'ESCALA DE LOUVOR';
     const options = {

@@ -1,0 +1,36 @@
+{
+  "recado:rec_999:todos:joao silva": {
+    "eventKey": "recado:rec_999:todos:joao silva",
+    "status": "fcm_dispatched",
+    "createdAt": "2026-10-28T13:51:51.196Z",
+    "updatedAt": "2026-10-28T13:51:51.196Z",
+    "destinatario": "João Silva",
+    "tipo": "NOVO_RECADO",
+    "fcmMessageId": "fcm_msg_joao"
+  },
+  "recado:rec_999:todos:maria santos": {
+    "eventKey": "recado:rec_999:todos:maria santos",
+    "status": "pending",
+    "createdAt": "2026-10-28T13:51:51.197Z",
+    "updatedAt": "2026-10-28T13:51:51.197Z",
+    "destinatario": "Maria Santos",
+    "tipo": "NOVO_RECADO"
+  },
+  "test:falha:key_456": {
+    "eventKey": "test:falha:key_456",
+    "status": "pending",
+    "createdAt": "2026-10-28T13:51:51.197Z",
+    "updatedAt": "2026-10-28T13:51:51.197Z",
+    "destinatario": "Maria",
+    "tipo": "TESTE"
+  },
+  "test:fcm_dispatched:key_789": {
+    "eventKey": "test:fcm_dispatched:key_789",
+    "status": "fcm_dispatched",
+    "createdAt": "2026-10-28T13:51:51.197Z",
+    "updatedAt": "2026-10-28T13:51:51.197Z",
+    "destinatario": "Pedro",
+    "tipo": "TESTE",
+    "fcmMessageId": "msg_id_fcm_abc123"
+  }
+}
