@@ -579,6 +579,147 @@ function doPost(e) {
       return jsonResponse({ sucesso: true, mensagem: "Notificações marcadas como lidas." });
     }
 
+    // 6. CRIAR NOVO RECADO
+    if (action === "createRecado" || action === "criarRecado") {
+      var titulo = String(params.titulo || "").trim();
+      var mensagem = String(params.mensagem || "").trim();
+      var autor = String(params.nome || params.autor || "").trim();
+      var img = String(params.imagemUrl || params.imagemBase64 || params.imagem || "").trim();
+
+      if (!titulo || !mensagem) {
+        return jsonResponse({ sucesso: false, mensagem: "Título e mensagem do recado são obrigatórios." });
+      }
+
+      var recadosSheet = ss.getSheetByName(ABA_RECADOS);
+      if (!recadosSheet) {
+        recadosSheet = ss.insertSheet(ABA_RECADOS);
+        recadosSheet.appendRow(["ID", "Título", "Mensagem", "Imagem URL", "Ativo", "Data Criação"]);
+      }
+
+      var recadoId = String(params.id || "").trim() || ("rec_" + new Date().getTime());
+      var dataCriacao = Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy HH:mm");
+
+      recadosSheet.appendRow([recadoId, titulo, mensagem, img, "SIM", dataCriacao]);
+
+      return jsonResponse({
+        sucesso: true,
+        id: recadoId,
+        mensagem: "Recado criado com sucesso na planilha.",
+        recado: {
+          id: recadoId,
+          titulo: titulo,
+          mensagem: mensagem,
+          imagemUrl: img,
+          ativo: "SIM",
+          dataCriacao: dataCriacao
+        }
+      });
+    }
+
+    // 7. EDITAR RECADO EXISTENTE
+    if (action === "updateRecado" || action === "atualizarRecado" || action === "editarRecado") {
+      var targetId = String(params.id || "").trim();
+      var titulo = String(params.titulo || "").trim();
+      var mensagem = String(params.mensagem || "").trim();
+      var img = String(params.imagemUrl || params.imagemBase64 || params.imagem || "").trim();
+      var ativo = String(params.ativo || "SIM").trim().toUpperCase();
+
+      if (!targetId) {
+        return jsonResponse({ sucesso: false, mensagem: "ID do recado é obrigatório." });
+      }
+
+      var recadosSheet = ss.getSheetByName(ABA_RECADOS);
+      if (recadosSheet) {
+        var recData = recadosSheet.getDataRange().getValues();
+        for (var r = 1; r < recData.length; r++) {
+          if (String(recData[r][0] || "").trim() === targetId) {
+            if (titulo) recadosSheet.getRange(r + 1, 2).setValue(titulo);
+            if (mensagem) recadosSheet.getRange(r + 1, 3).setValue(mensagem);
+            if (img) recadosSheet.getRange(r + 1, 4).setValue(img);
+            recadosSheet.getRange(r + 1, 5).setValue(ativo);
+            return jsonResponse({ sucesso: true, id: targetId, mensagem: "Recado atualizado com sucesso na planilha." });
+          }
+        }
+      }
+      return jsonResponse({ sucesso: false, mensagem: "Recado não encontrado na planilha." });
+    }
+
+    // 8. EXCLUIR RECADO
+    if (action === "deleteRecado" || action === "excluirRecado") {
+      var targetId = String(params.id || "").trim();
+      if (!targetId) {
+        return jsonResponse({ sucesso: false, mensagem: "ID do recado é obrigatório." });
+      }
+
+      var recadosSheet = ss.getSheetByName(ABA_RECADOS);
+      if (recadosSheet) {
+        var recData = recadosSheet.getDataRange().getValues();
+        for (var r = 1; r < recData.length; r++) {
+          if (String(recData[r][0] || "").trim() === targetId) {
+            recadosSheet.getRange(r + 1, 5).setValue("NAO");
+            return jsonResponse({ sucesso: true, id: targetId, mensagem: "Recado marcado como inativo na planilha." });
+          }
+        }
+      }
+      return jsonResponse({ sucesso: false, mensagem: "Recado não encontrado na planilha." });
+    }
+
+    // 9. CRIAR SOLICITAÇÃO DE TROCA
+    if (action === "createSolicitacao" || action === "criarSolicitacao") {
+      var targetData = formatDateValue(params.dataEscala || params.data || params.dataCulto);
+      var quemPediu = String(params.nome || params.quemPediu || "").trim();
+      var substituto = String(params.substituto || "").trim();
+      var motivo = String(params.motivo || "").trim();
+      var funcao = String(params.funcao || "").trim();
+      var instrumento = String(params.instrumento || "").trim();
+
+      if (!targetData || !quemPediu) {
+        return jsonResponse({ sucesso: false, mensagem: "Data da escala e solicitante são obrigatórios." });
+      }
+
+      var solSheet = ss.getSheetByName(ABA_SOLICITACOES);
+      if (!solSheet) {
+        solSheet = ss.insertSheet(ABA_SOLICITACOES);
+        solSheet.appendRow(["Data", "Quem Pediu", "Função", "Instrumento", "Substituto", "Motivo", "Status", "Data Criação"]);
+      }
+
+      var dataCriacao = Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy HH:mm");
+      var solId = "sol-" + targetData.replace(/[^0-9]/g, "") + "-" + quemPediu + "-" + new Date().getTime();
+
+      solSheet.appendRow([targetData, quemPediu, funcao, instrumento, substituto, motivo, "PENDENTE", dataCriacao]);
+
+      return jsonResponse({
+        sucesso: true,
+        id: solId,
+        mensagem: "Solicitação registrada com sucesso na planilha."
+      });
+    }
+
+    // 10. PROCESSAR / RESPONDER SOLICITAÇÃO DE TROCA
+    if (action === "processaSolicitacao" || action === "responderSolicitacao") {
+      var targetData = formatDateValue(params.dataEscala || params.data || params.dataCulto);
+      var quemPediu = String(params.quemPediu || params.nome || "").trim();
+      var acaoSol = String(params.acao || params.novoStatus || "APROVAR").toUpperCase();
+
+      var newStatus = "APROVADA";
+      if (acaoSol === "RECUSAR" || acaoSol === "RECUSADA") newStatus = "RECUSADA";
+      else if (acaoSol === "CANCELAR" || acaoSol === "CANCELADA") newStatus = "CANCELADA";
+
+      var solSheet = ss.getSheetByName(ABA_SOLICITACOES);
+      if (solSheet) {
+        var solData = solSheet.getDataRange().getValues();
+        for (var s = 1; s < solData.length; s++) {
+          var sDt = formatDateValue(solData[s][0]);
+          var sQP = String(solData[s][1] || "").trim();
+          if (sDt === targetData && sQP.toLowerCase() === quemPediu.toLowerCase()) {
+            solSheet.getRange(s + 1, 7).setValue(newStatus);
+            return jsonResponse({ sucesso: true, mensagem: "Solicitação " + newStatus + " com sucesso." });
+          }
+        }
+      }
+      return jsonResponse({ sucesso: false, mensagem: "Solicitação não encontrada na planilha." });
+    }
+
     return jsonResponse({ sucesso: false, mensagem: "Ação POST não reconhecida: " + action });
   } catch (err) {
     return jsonResponse({ sucesso: false, mensagem: "Erro no doPost: " + err.toString() });

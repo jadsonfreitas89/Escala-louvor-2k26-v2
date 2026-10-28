@@ -1976,16 +1976,38 @@ export function createApiApp(): Express {
         throw new Error(`Erro na resposta do Google Apps Script: ${gasResponse.statusText}`);
       }
 
-      const result = await gasResponse.json();
+      const textBody = await gasResponse.text();
+      let result: any;
+      try {
+        result = JSON.parse(textBody);
+      } catch (parseErr) {
+        console.error("[POST /api/recados] Erro ao parsear JSON de resposta do Google Apps Script:", parseErr, "Corpo recebido:", textBody.substring(0, 300));
+        res.status(502).json({
+          sucesso: false,
+          mensagem: "Resposta inválida recebida do servidor de persistência (Google Apps Script)."
+        });
+        return;
+      }
 
-      // Dispara notificação oficial para todos os integrantes
+      if (!result || result.sucesso !== true) {
+        console.warn("[POST /api/recados] Falha na persistência reportada pelo Google Apps Script:", result);
+        res.status(400).json({
+          sucesso: false,
+          mensagem: result?.mensagem || "Não foi possível salvar o recado na planilha."
+        });
+        return;
+      }
+
+      // Dispara notificação oficial para todos os integrantes SOMENTE após confirmação de sucesso na planilha
       try {
         if (cachedIntegrantes.length === 0) {
           syncEscalaDataBackground();
         }
-        const recadoId = result?.id || result?.recado?.id || `rec_${Date.now()}`;
-        processarNotificacaoNovoRecado(recadoId, cachedIntegrantes);
-        registrarRecadoNoSnapshot(recadoId, String(titulo).trim());
+        const recadoId = result?.id || result?.recado?.id;
+        if (recadoId) {
+          processarNotificacaoNovoRecado(recadoId, cachedIntegrantes);
+          registrarRecadoNoSnapshot(recadoId, String(titulo).trim());
+        }
       } catch (notifErr) {
         console.error("Erro ao disparar notificação de novo recado:", notifErr);
       }

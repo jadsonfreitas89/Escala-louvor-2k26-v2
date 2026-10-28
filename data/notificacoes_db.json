@@ -1,14 +1,26 @@
 [
   {
-    "id": "6dab032f-b698-4017-baaa-e7056952234b",
-    "destinatario": "Lucas Solicitante",
-    "titulo": "Troca Recusada",
-    "mensagem": "Troca Recusada",
-    "tipo": "SOLICITACAO_RECUSADA",
-    "data": "2026-10-28T13:51:51.173Z",
-    "dataHora": "2026-10-28T13:51:51.173Z",
+    "id": "fc6cfe85-0f6e-4683-be03-fc08459732fd",
+    "destinatario": "Maria Santos",
+    "titulo": "Louvores para o Culto",
+    "mensagem": "Maria Santos, a Paz! Lembramos que os louvores já estão disponíveis no aplicativo!",
+    "tipo": "LEMBRETE_LOUVORES",
+    "data": "2026-10-28T16:29:40.638Z",
+    "dataHora": "2026-10-28T16:29:40.638Z",
     "lida": "NAO",
-    "eventoId": "troca:sol_102:recusada_solic:lucas_solicitante",
+    "eventoId": "lembrete-louvores:2026_10_28:maria_santos:11",
+    "origem": "APP"
+  },
+  {
+    "id": "ff10d43a-6279-4da3-8f49-c90bd9a9885d",
+    "destinatario": "João Silva",
+    "titulo": "Louvores para o Culto",
+    "mensagem": "João Silva, a Paz! Lembramos que os louvores já estão disponíveis no aplicativo!",
+    "tipo": "LEMBRETE_LOUVORES",
+    "data": "2026-10-28T16:29:40.637Z",
+    "dataHora": "2026-10-28T16:29:40.637Z",
+    "lida": "NAO",
+    "eventoId": "lembrete-louvores:2026_10_28:joao_silva:11",
     "origem": "APP"
   }
 ]
