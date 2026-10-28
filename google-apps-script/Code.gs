@@ -656,6 +656,7 @@ function doPost(e) {
         var recData = recadosSheet.getDataRange().getValues();
         for (var r = 1; r < recData.length; r++) {
           if (String(recData[r][0] || "").trim() === targetId) {
+            Logger.log("[DELETE-RECADO] Encontrado ID: " + targetId + " na linha: " + (r + 1));
             recadosSheet.deleteRow(r + 1);
             return jsonResponse({ sucesso: true, id: targetId, mensagem: "Recado excluído permanentemente da planilha." });
           }

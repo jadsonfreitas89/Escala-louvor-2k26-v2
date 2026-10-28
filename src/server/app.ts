@@ -2081,6 +2081,7 @@ export function createApiApp(): Express {
     try {
       const user = (req as any).user as UserSession;
       const recadoId = req.params.id || req.body.id;
+      console.log("[DELETE-RECADO] Recebido recadoId:", recadoId);
 
       if (!recadoId) {
         res.status(400).json({
@@ -2105,6 +2106,7 @@ export function createApiApp(): Express {
         },
         body: form.toString()
       });
+      console.log("[DELETE-RECADO] Status do GAS:", gasResponse.status);
 
       if (!gasResponse.ok) {
         throw new Error(`Erro na resposta do Google Apps Script: ${gasResponse.statusText}`);
