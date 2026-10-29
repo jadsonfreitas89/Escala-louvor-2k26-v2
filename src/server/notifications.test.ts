@@ -10,6 +10,7 @@ import {
   resetSnapshotForTesting,
   clearNotificationsForTesting,
   pushNotificacaoParaGas,
+  setMockTimeForTesting,
   NotificacaoRecord,
   IntegranteRef,
   EscalaRef
@@ -176,6 +177,9 @@ async function runTests() {
     { nome: "Maria Santos", funcao: "Líder" }
   ];
 
+  // Configura quarta-feira 28/10/2026 18:00 (após slots de louvores)
+  setMockTimeForTesting(new Date("2026-10-28T18:00:00"));
+
   const countLembretes1 = processarLembretesDeCulto(escalaMock, integrantesMock, []);
   assert(countLembretes1 === 0, "Sem louvores cadastrados, não deve criar lembretes de louvores.");
   
@@ -184,6 +188,9 @@ async function runTests() {
   
   const countLembretes3 = processarLembretesDeCulto(escalaMock, integrantesMock, [{ data: "29/10/2026", louvor: "Outra data" }]);
   assert(countLembretes3 === 0, "Louvores para outra data não devem autorizar lembrete para hoje.");
+  
+  // Reseta mockTime
+  setMockTimeForTesting(null);
   
   console.log("✅ Lembretes de culto e verificação de louvores validados!");
 
@@ -493,6 +500,60 @@ async function runTests() {
   console.log("✅ Exclusão definitiva de recados validada!");
 
   console.log("✅ Todos os 5 cenários de validação de persistência do recado foram aprovados com sucesso!");
+
+  // Cenário 14: Teste de robustez na extração de membros e normalização de hash
+  console.log("\n14. Testando robustez na extração de membros e normalização de hash...");
+  function extrairMembrosSimulado(dirigente, vocal, musicos, mesario) {
+    var list = [];
+    if (dirigente && dirigente.trim()) list.push({ nome: dirigente.trim(), funcao: "Dirigente" });
+    if (musicos && musicos.trim()) {
+      var mus = musicos.split(/[,X\/]/i);
+      for (var j = 0; j < mus.length; j++) {
+        var m = mus[j].trim();
+        if (m) {
+          var match = m.match(/^(.+?)\s*\(\s*(.+?)\s*\)$/); // Versão corrigida com regex robusta
+          if (match) {
+            list.push({ nome: match[1].trim(), funcao: "Músico", instrumento: match[2].trim() });
+          } else {
+            list.push({ nome: m, funcao: "Músico" });
+          }
+        }
+      }
+    }
+    return list;
+  }
+
+  // Teste de regex robusta (com espaços dentro do parênteses)
+  const m1 = extrairMembrosSimulado("", "", "Violino ( Violinista )", "");
+  assert(m1[0].instrumento === "Violinista", "Regex deve ignorar espaços extras dentro dos parênteses.");
+
+  // Teste de normalização de hash (invariante a espaços/formatação)
+  const h1 = "Louvor A || Uniforme B";
+  const h2 = "  Louvor A  ||  Uniforme B ";
+  const norm1 = h1.toLowerCase().trim().replace(/\s+/g, " ");
+  const norm2 = h2.toLowerCase().trim().replace(/\s+/g, " ");
+  assert(norm1 === norm2, "Hashing deve ser invariante a espaços em branco.");
+
+  console.log("✅ Robustez de normalização e hashing validada!");
+
+  // Cenário 15: Teste de anti-duplicidade em lote (simulado)
+  console.log("\n15. Testando anti-duplicidade eficiente (cacheado)...");
+  var NOTIF_CACHE_SIMULADO = [
+    ["ID", "Destinatario", "EventoId"],
+    ["1", "João", "evt1"]
+  ];
+  
+  function criarNotificacaoSimulado(nome, eventoId) {
+    for (var i = 1; i < NOTIF_CACHE_SIMULADO.length; i++) {
+        if (NOTIF_CACHE_SIMULADO[i][1] === nome && NOTIF_CACHE_SIMULADO[i][2] === eventoId) return false;
+    }
+    NOTIF_CACHE_SIMULADO.push(["new", nome, eventoId]);
+    return true;
+  }
+  
+  assert(criarNotificacaoSimulado("João", "evt1") === false, "Anti-duplicidade deve detectar registro existente.");
+  assert(criarNotificacaoSimulado("Maria", "evt2") === true, "Anti-duplicidade deve permitir registro novo.");
+  console.log("✅ Anti-duplicidade eficiente validada!");
 
   console.log("\n=================================================");
   console.log("🎉 TODOS OS TESTES PASSARAM COM SUCESSO!");

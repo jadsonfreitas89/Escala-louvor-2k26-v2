@@ -288,13 +288,29 @@ export function extrairMembrosDaEscala(escala: EscalaRef): EscalaMemberInfo[] {
     });
   }
 
+  function smartSplit(str: string): string[] {
+    const result: string[] = [];
+    let depth = 0;
+    let current = "";
+    const delimiters = /[,X\/]/;
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      if (char === '(') depth++;
+      else if (char === ')') depth--;
+      if (depth === 0 && delimiters.test(char)) {
+        result.push(current.trim());
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result.filter(s => s.length > 0);
+  }
+
   // 3. Vocal
   if (escala.vocal && escala.vocal.trim()) {
-    const vocals = escala.vocal
-      .split(/[,X\/]/i)
-      .map((v) => v.trim())
-      .filter((v) => v.length > 0);
-
+    const vocals = smartSplit(escala.vocal);
     for (const v of vocals) {
       if (!result.some((m) => normalizarNome(m.nome) === normalizarNome(v))) {
         result.push({
@@ -305,15 +321,12 @@ export function extrairMembrosDaEscala(escala: EscalaRef): EscalaMemberInfo[] {
     }
   }
 
-  // 4. Músicos (com possível instrumento entre parênteses ex: "Jadson (Violino)")
+  // 4. Músicos (com possível instrumento entre parênteses ex: "Jadson (Violino, Cordas)")
   if (escala.musicos && escala.musicos.trim()) {
-    const rawMusicos = escala.musicos
-      .split(/[,X\/]/i)
-      .map((m) => m.trim())
-      .filter((m) => m.length > 0);
+    const rawMusicos = smartSplit(escala.musicos);
 
     for (const item of rawMusicos) {
-      const matchInst = item.match(/^(.+?)\s*\((.+?)\)$/);
+      const matchInst = item.match(/^(.+?)\s*\(\s*(.+?)\s*\)$/);
       let nome = item;
       let instrumento: string | undefined = undefined;
 
@@ -391,6 +404,11 @@ export function isUserInEscala(escala: EscalaRef | null | undefined, nome: strin
   return false;
 }
 
+let mockTime: Date | null = null;
+export function setMockTimeForTesting(date: Date | null) {
+  mockTime = date;
+}
+
 /**
  * Retorna hora, minuto, dia da semana e data no fuso de São Paulo
  */
@@ -401,7 +419,7 @@ export function getSaoPauloNow(): {
   timeStr: string; // "HH:mm"
   totalMinutes: number; // hours * 60 + minutes
 } {
-  const now = new Date();
+  const now = mockTime || new Date();
 
   // Formata partes individuais no fuso America/Sao_Paulo
   const formatter = new Intl.DateTimeFormat("en-US", {

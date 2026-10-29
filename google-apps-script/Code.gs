@@ -784,7 +784,7 @@ function detectAndProcessSheetChanges(origem) {
     var uniforme = String(rowData[6] || "").trim();
 
     var membros = extrairMembros(dirigente, vocal, musicos, mesario);
-    var contentHash = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, louvores + "||" + uniforme)
+    var contentHash = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, normalizarNome(louvores) + "||" + normalizarNome(uniforme))
       .map(function(chr){return (chr+256).toString(16).slice(-2);}).join("").substring(0, 8);
 
     currentEscalas[dataStr] = {
@@ -873,14 +873,16 @@ function detectAndProcessSheetChanges(origem) {
           }
         }
         if (!achou) {
-          criarNotificacaoNoSheets({
-            destinatario: mAnt.nome,
-            tipo: "ESCALA",
-            titulo: "Alteração na Escala",
-            mensagem: "A Paz " + mAnt.nome + "! Você foi removido(a) da escala do dia " + dt + ".",
-            eventoId: "ESCALA_REMOVIDO_" + dt.replace(/[\/]/g, "_") + "_" + normalizarNome(mAnt.nome).replace(/\s+/g, "_"),
-            origem: origem
-          });
+          try {
+            criarNotificacaoNoSheets({
+              destinatario: mAnt.nome,
+              tipo: "ESCALA",
+              titulo: "Alteração na Escala",
+              mensagem: "A Paz " + mAnt.nome + "! Você foi removido(a) da escala do dia " + dt + ".",
+              eventoId: "ESCALA_REMOVIDO_" + dt.replace(/[\/]/g, "_") + "_" + normalizarNome(mAnt.nome).replace(/\s+/g, "_"),
+              origem: origem
+            });
+          } catch(e) { Logger.log("Erro ao notificar remoção: " + mAnt.nome + " - " + e); }
         }
       }
 
@@ -896,14 +898,16 @@ function detectAndProcessSheetChanges(origem) {
         }
         if (!achouAnt) {
           var detalhe = mNov.instrumento ? mNov.funcao + " (" + mNov.instrumento + ")" : mNov.funcao;
-          criarNotificacaoNoSheets({
-            destinatario: mNov.nome,
-            tipo: "ESCALA",
-            titulo: "Nova Escala para Você",
-            mensagem: "A Paz " + mNov.nome + "! Você foi escalado(a) para o culto do dia " + dt + " como " + detalhe + "!",
-            eventoId: "ESCALA_ADICIONADO_" + dt.replace(/[\/]/g, "_") + "_" + normalizarNome(mNov.nome).replace(/\s+/g, "_"),
-            origem: origem
-          });
+          try {
+            criarNotificacaoNoSheets({
+              destinatario: mNov.nome,
+              tipo: "ESCALA",
+              titulo: "Nova Escala para Você",
+              mensagem: "A Paz " + mNov.nome + "! Você foi escalado(a) para o culto do dia " + dt + " como " + detalhe + "!",
+              eventoId: "ESCALA_ADICIONADO_" + dt.replace(/[\/]/g, "_") + "_" + normalizarNome(mNov.nome).replace(/\s+/g, "_"),
+              origem: origem
+            });
+          } catch(e) { Logger.log("Erro ao notificar adição: " + mNov.nome + " - " + e); }
         }
       }
 
@@ -917,14 +921,16 @@ function detectAndProcessSheetChanges(origem) {
             var iMudou = (mN.instrumento || "") !== (mA.instrumento || "");
             if (fMudou || iMudou) {
               var detNovo = mN.instrumento ? mN.funcao + " (" + mN.instrumento + ")" : mN.funcao;
-              criarNotificacaoNoSheets({
-                destinatario: mN.nome,
-                tipo: "ESCALA",
-                titulo: "Função Alterada na Escala",
-                mensagem: "A Paz " + mN.nome + "! Sua função na escala do dia " + dt + " foi alterada para " + detNovo + ".",
-                eventoId: "ESCALA_ALTERADA_" + dt.replace(/[\/]/g, "_") + "_" + normalizarNome(mN.nome).replace(/\s+/g, "_") + "_" + mN.funcao,
-                origem: origem
-              });
+              try {
+                criarNotificacaoNoSheets({
+                  destinatario: mN.nome,
+                  tipo: "ESCALA",
+                  titulo: "Função Alterada na Escala",
+                  mensagem: "A Paz " + mN.nome + "! Sua função na escala do dia " + dt + " foi alterada para " + detNovo + ".",
+                  eventoId: "ESCALA_ALTERADA_" + dt.replace(/[\/]/g, "_") + "_" + normalizarNome(mN.nome).replace(/\s+/g, "_") + "_" + mN.funcao,
+                  origem: origem
+                });
+              } catch(e) { Logger.log("Erro ao notificar alteração: " + mN.nome + " - " + e); }
             }
             break;
           }
@@ -934,14 +940,16 @@ function detectAndProcessSheetChanges(origem) {
       // Louvores e Uniformes
       if (nova.hash !== antiga.hash && nova.hash) {
         for (var mIdx = 0; mIdx < membrosNovos.length; mIdx++) {
-          criarNotificacaoNoSheets({
-            destinatario: membrosNovos[mIdx].nome,
-            tipo: "LOUVORES_UNIFORMES",
-            titulo: "Louvores e Uniformes",
-            mensagem: "A Paz " + membrosNovos[mIdx].nome + "! Os louvores e uniformes já estão disponíveis!",
-            eventoId: "LOUVORES_UNIFORMES_" + dt.replace(/[\/]/g, "_") + "_V" + nova.hash,
-            origem: origem
-          });
+          try {
+            criarNotificacaoNoSheets({
+              destinatario: membrosNovos[mIdx].nome,
+              tipo: "LOUVORES_UNIFORMES",
+              titulo: "Louvores e Uniformes",
+              mensagem: "A Paz " + membrosNovos[mIdx].nome + "! Os louvores e uniformes já estão disponíveis!",
+              eventoId: "LOUVORES_UNIFORMES_" + dt.replace(/[\/]/g, "_") + "_V" + nova.hash,
+              origem: origem
+            });
+          } catch(e) { Logger.log("Erro ao notificar louvores: " + membrosNovos[mIdx].nome + " - " + e); }
         }
       }
     }
@@ -1023,42 +1031,47 @@ function detectAndProcessSheetChanges(origem) {
 /**
  * Cria notificação na aba NOTIFICAÇÕES da planilha garantindo anti-duplicidade
  */
+var NOTIF_CACHE = null;
+
 function criarNotificacaoNoSheets(notif) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(ABA_NOTIFICACOES);
-  if (!sheet) {
-    sheet = ss.insertSheet(ABA_NOTIFICACOES);
-    sheet.appendRow(["ID", "Destinatario", "Titulo", "Mensagem", "Tipo", "Data", "Lida", "EventoId", "Origem"]);
-  }
-
-  var data = sheet.getDataRange().getValues();
-  var normDest = normalizarNome(notif.destinatario);
-  var normEvento = (notif.eventoId || "").trim();
-
-  // Verifica anti-duplicidade
-  for (var i = 1; i < data.length; i++) {
-    var dDest = normalizarNome(data[i][1]);
-    var dEvento = String(data[i][7] || "").trim();
-    if ((dDest === normDest || dDest === "todos") && dEvento === normEvento && normEvento !== "") {
-      return; // Já existe
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(ABA_NOTIFICACOES);
+    if (!sheet) {
+      sheet = ss.insertSheet(ABA_NOTIFICACOES);
+      sheet.appendRow(["ID", "Destinatario", "Titulo", "Mensagem", "Tipo", "Data", "Lida", "EventoId", "Origem"]);
     }
+
+    if (NOTIF_CACHE === null) {
+        NOTIF_CACHE = sheet.getDataRange().getValues();
+    }
+    
+    var normDest = normalizarNome(notif.destinatario);
+    var normEvento = (notif.eventoId || "").trim();
+
+    for (var i = 1; i < NOTIF_CACHE.length; i++) {
+      var dDest = normalizarNome(NOTIF_CACHE[i][1]);
+      var dEvento = String(NOTIF_CACHE[i][7] || "").trim();
+      if ((dDest === normDest || dDest === "todos") && dEvento === normEvento && normEvento !== "") {
+        return; // Já existe
+      }
+    }
+
+    var id = notif.id || Utilities.getUuid();
+    var nowIso = notif.data || new Date().toISOString();
+    var newRow = [
+      id, notif.destinatario, notif.titulo, notif.mensagem, notif.tipo,
+      nowIso, notif.lida || "NAO", notif.eventoId || "", notif.origem || "GOOGLE_SHEETS"
+    ];
+    sheet.appendRow(newRow);
+    NOTIF_CACHE.push(newRow); // Atualiza cache local
+
+    Logger.log("[NOTIFICACAO-CRIADA] Destinatario: " + notif.destinatario + " | Evento: " + notif.eventoId);
+  } finally {
+    lock.releaseLock();
   }
-
-  var id = notif.id || Utilities.getUuid();
-  var nowIso = notif.data || new Date().toISOString();
-  sheet.appendRow([
-    id,
-    notif.destinatario,
-    notif.titulo,
-    notif.mensagem,
-    notif.tipo,
-    nowIso,
-    notif.lida || "NAO",
-    notif.eventoId || "",
-    notif.origem || "GOOGLE_SHEETS"
-  ]);
-
-  Logger.log("[NOTIFICACAO-CRIADA] Destinatario: " + notif.destinatario + " | Evento: " + notif.eventoId + " | Origem: " + (notif.origem || "GOOGLE_SHEETS"));
 }
 
 /**
@@ -1382,18 +1395,18 @@ function extrairMembros(dirigente, vocal, musicos, mesario) {
   if (dirigente && dirigente.trim()) list.push({ nome: dirigente.trim(), funcao: "Dirigente" });
   if (mesario && mesario.trim()) list.push({ nome: mesario.trim(), funcao: "Mesário de Som" });
   if (vocal && vocal.trim()) {
-    var vocs = vocal.split(/[,X\/]/i);
+    var vocs = smartSplit(vocal);
     for (var i = 0; i < vocs.length; i++) {
       var v = vocs[i].trim();
       if (v) list.push({ nome: v, funcao: "Vocal" });
     }
   }
   if (musicos && musicos.trim()) {
-    var mus = musicos.split(/[,X\/]/i);
+    var mus = smartSplit(musicos);
     for (var j = 0; j < mus.length; j++) {
       var m = mus[j].trim();
       if (m) {
-        var match = m.match(/^(.+?)\s*\((.+?)\)$/);
+        var match = m.match(/^(.+?)\s*\(\s*(.+?)\s*\)$/);
         if (match) {
           list.push({ nome: match[1].trim(), funcao: "Músico", instrumento: match[2].trim() });
         } else {
@@ -1427,3 +1440,24 @@ function jsonResponse(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
+function smartSplit(str) {
+  var result = [];
+  var depth = 0;
+  var current = "";
+  var delimiters = /[,X\/]/;
+  for (var i = 0; i < str.length; i++) {
+    var char = str[i];
+    if (char === '(') depth++;
+    else if (char === ')') depth--;
+    if (depth === 0 && delimiters.test(char)) {
+      result.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim());
+  return result.filter(function(s) { return s.length > 0; });
+}
+
