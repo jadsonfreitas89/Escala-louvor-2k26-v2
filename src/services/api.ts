@@ -1004,6 +1004,40 @@ class ApiService {
       return { sucesso: false, mensagem: 'Erro de comunicação ao alterar situação do integrante.' };
     }
   }
+
+  /**
+   * Exclui um integrante do ministério (Líder)
+   */
+  public async deleteIntegrante(nome: string): Promise<ApiResponse & { isLogical?: boolean }> {
+    const token = this.getToken();
+    if (!token) {
+      return { sucesso: false, mensagem: 'Você precisa estar autenticado como Líder para excluir integrantes.' };
+    }
+
+    try {
+      const response = await fetch(`/api/integrantes/${encodeURIComponent(nome)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.sucesso) {
+        return { sucesso: false, mensagem: data.mensagem || 'Não foi possível excluir o integrante.' };
+      }
+
+      return {
+        sucesso: true,
+        mensagem: data.mensagem || 'Integrante excluído com sucesso.',
+        isLogical: data.isLogical
+      };
+    } catch (err: any) {
+      console.error('Erro ao excluir integrante:', err);
+      return { sucesso: false, mensagem: 'Erro de comunicação ao excluir integrante.' };
+    }
+  }
 }
 
 export const apiService = new ApiService();

@@ -2326,6 +2326,186 @@ export function createApiApp(): Express {
     }
   });
 
+  /**
+   * DELETE /api/integrantes/:nome (Excluir integrante com verificação de vínculos)
+   */
+  app.delete("/api/integrantes/:nome", authenticateToken, requireLider, async (req: Request, res: Response) => {
+    try {
+      const currentUser = (req as any).user as UserSession;
+      const targetNome = decodeURIComponent(req.params.nome || "").trim();
+
+      if (!targetNome) {
+        res.status(400).json({ sucesso: false, mensagem: "Nome do integrante é obrigatório." });
+        return;
+      }
+
+      // Regra 5: Não permitir excluir a própria conta
+      if (currentUser && currentUser.nome.trim().toLowerCase() === targetNome.toLowerCase()) {
+        res.status(400).json({
+          sucesso: false,
+          mensagem: "Não é possível excluir a sua própria conta."
+        });
+        return;
+      }
+
+      // Carrega dados atuais do GAS para verificação de vínculos e regra de líder
+      const gasResponse = await fetch(`${GAS_API_URL}?action=getEscalaData`, {
+        method: "GET",
+        headers: { Accept: "application/json" }
+      });
+
+      if (!gasResponse.ok) {
+        throw new Error(`Falha de comunicação com o Google Apps Script: ${gasResponse.statusText}`);
+      }
+
+      const data: any = await gasResponse.json();
+      const integrantesList: any[] = Array.isArray(data.integrantes) ? data.integrantes : [];
+      const escalaList: any[] = Array.isArray(data.escala) ? data.escala : [];
+      const solicitacoesList: any[] = Array.isArray(data.solicitacoes) ? data.solicitacoes : [];
+      const recadosList: any[] = Array.isArray(data.recados) ? data.recados : [];
+
+      const targetMember = integrantesList.find(
+        (i: any) => (i.nome || "").trim().toLowerCase() === targetNome.toLowerCase()
+      );
+
+      if (!targetMember) {
+        res.status(404).json({
+          sucesso: false,
+          mensagem: `Integrante "${targetNome}" não foi encontrado no sistema.`
+        });
+        return;
+      }
+
+      // Regra 4: Não permitir excluir o último líder ativo
+      const isTargetLider = (targetMember.funcao || "").toUpperCase().includes("LIDER");
+      if (isTargetLider && targetMember.ativo !== "NAO") {
+        const activeLeaders = integrantesList.filter(
+          (i: any) => i.ativo !== "NAO" && (i.funcao || "").toUpperCase().includes("LIDER")
+        );
+        if (activeLeaders.length <= 1) {
+          res.status(400).json({
+            sucesso: false,
+            mensagem: "Não é possível excluir o único líder ativo do sistema."
+          });
+          return;
+        }
+      }
+
+      // Regra 1 e 2: Verificar vínculos e histórico antes da exclusão (escalas, cultos, solicitações, recados)
+      const targetLower = targetNome.toLowerCase();
+      let hasHistory = false;
+
+      // 1. Verifica no histórico de escalas
+      for (const e of escalaList) {
+        const dirigente = (e.dirigente || "").toLowerCase();
+        const mesario = (e.mesario || "").toLowerCase();
+        const vocalMembers = (e.vocal || "").toLowerCase();
+        const musicosMembers = (e.musicos || "").toLowerCase();
+
+        if (dirigente === targetLower || mesario === targetLower) {
+          hasHistory = true;
+          break;
+        }
+
+        if (vocalMembers.includes(targetLower) || musicosMembers.includes(targetLower)) {
+          hasHistory = true;
+          break;
+        }
+      }
+
+      // 2. Verifica no histórico de solicitações de troca
+      if (!hasHistory) {
+        for (const s of solicitacoesList) {
+          const qp = (s.quemPediu || "").toLowerCase();
+          const sub = (s.substituto || "").toLowerCase();
+          if (qp === targetLower || sub === targetLower) {
+            hasHistory = true;
+            break;
+          }
+        }
+      }
+
+      // 3. Verifica em recados
+      if (!hasHistory) {
+        for (const r of recadosList) {
+          const autor = (r.autor || r.nome || "").toLowerCase();
+          if (autor === targetLower) {
+            hasHistory = true;
+            break;
+          }
+        }
+      }
+
+      let isLogical = false;
+      let finalMsg = "";
+
+      if (hasHistory) {
+        // Exclusão Lógica: Inativa o integrante para remover dos cadastros ativos e bloquear acesso
+        const updateGasResponse = await fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "salvarIntegrante",
+            nomeOriginal: targetNome,
+            novoNome: targetNome,
+            ativo: "NAO"
+          })
+        });
+
+        const updateData: any = await updateGasResponse.json();
+        if (!updateGasResponse.ok || !updateData.sucesso) {
+          res.status(400).json({
+            sucesso: false,
+            mensagem: updateData?.mensagem || "Não foi possível inativar o integrante no servidor."
+          });
+          return;
+        }
+
+        isLogical = true;
+        finalMsg = `Integrante "${targetNome}" possui histórico em escalas/registros passados. O cadastro foi inativado e removido dos cadastros ativos, preservando todo o seu histórico.`;
+      } else {
+        // Exclusão Física: Remove o registro permanentemente se não houver qualquer histórico
+        const deleteGasResponse = await fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "excluirIntegrante",
+            nome: targetNome
+          })
+        });
+
+        const deleteData: any = await deleteGasResponse.json();
+        if (!deleteGasResponse.ok || !deleteData.sucesso) {
+          res.status(400).json({
+            sucesso: false,
+            mensagem: deleteData?.mensagem || "Não foi possível remover o integrante no servidor."
+          });
+          return;
+        }
+
+        isLogical = false;
+        finalMsg = `Integrante "${targetNome}" foi excluído permanentemente da base de dados.`;
+      }
+
+      // Regra 8: Registrar a operação para auditoria
+      console.log(`[AUDIT] Integrante '${targetNome}' ${isLogical ? "desativado (exclusão lógica - histórico preservado)" : "excluído permanentemente"} pelo líder '${currentUser.nome}' às ${new Date().toISOString()}`);
+
+      syncEscalaDataBackground();
+
+      res.json({
+        sucesso: true,
+        mensagem: finalMsg,
+        isLogical: isLogical
+      });
+    } catch (err: any) {
+      console.error("[DELETE /api/integrantes/:nome] Erro ao excluir integrante:", err);
+      res.status(500).json({
+        sucesso: false,
+        mensagem: err.message || "Erro interno ao excluir integrante."
+      });
+    }
+  });
+
   // =========================================================================
   // ROTAS DE NOTIFICAÇÕES (Sincronização & Persistência)
   // =========================================================================

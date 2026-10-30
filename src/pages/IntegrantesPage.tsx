@@ -13,7 +13,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   ArrowLeft,
-  RotateCw
+  RotateCw,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useEscala } from '../context/EscalaContext';
@@ -24,6 +25,7 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { IntegranteModal } from '../components/integrantes/IntegranteModal';
+import { ConfirmDeleteModal } from '../components/integrantes/ConfirmDeleteModal';
 
 export const IntegrantesPage: React.FC = () => {
   const { user, isLider } = useAuth();
@@ -33,9 +35,15 @@ export const IntegrantesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'TODOS' | 'ATIVOS' | 'INATIVOS'>('ATIVOS');
 
-  // Modal State
+  // Modal State (Create / Edit)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIntegrante, setSelectedIntegrante] = useState<Integrante | null>(null);
+
+  // Delete Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [integranteToDelete, setIntegranteToDelete] = useState<Integrante | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null);
 
   const [statusTogglingName, setStatusTogglingName] = useState<string | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -88,6 +96,47 @@ export const IntegrantesPage: React.FC = () => {
   const handleOpenEditModal = (integrante: Integrante) => {
     setSelectedIntegrante(integrante);
     setIsModalOpen(true);
+  };
+
+  const handleOpenDeleteModal = (integrante: Integrante) => {
+    if (user?.nome && user.nome.trim().toLowerCase() === integrante.nome.trim().toLowerCase()) {
+      setFeedbackMsg({
+        type: 'error',
+        text: 'Não é possível excluir a sua própria conta.',
+      });
+      return;
+    }
+
+    setDeleteErrorMsg(null);
+    setIntegranteToDelete(integrante);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!integranteToDelete) return;
+
+    setIsDeleting(true);
+    setDeleteErrorMsg(null);
+
+    try {
+      const res = await apiService.deleteIntegrante(integranteToDelete.nome);
+
+      if (res.sucesso) {
+        setFeedbackMsg({
+          type: 'success',
+          text: res.mensagem || `Integrante "${integranteToDelete.nome}" excluído com sucesso!`,
+        });
+        setIsDeleteModalOpen(false);
+        setIntegranteToDelete(null);
+        await refreshData();
+      } else {
+        setDeleteErrorMsg(res.mensagem || 'Não foi possível excluir o integrante.');
+      }
+    } catch (err: any) {
+      setDeleteErrorMsg(err.message || 'Erro ao conectar com o servidor.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleToggleStatus = async (integrante: Integrante) => {
@@ -289,6 +338,9 @@ export const IntegrantesPage: React.FC = () => {
           {filteredIntegrantes.map((integrante) => {
             const isAtivo = integrante.ativo !== 'NAO';
             const isToggling = statusTogglingName === integrante.nome;
+            const isSelf = Boolean(
+              user?.nome && user.nome.trim().toLowerCase() === integrante.nome.trim().toLowerCase()
+            );
 
             return (
               <Card
@@ -315,6 +367,11 @@ export const IntegrantesPage: React.FC = () => {
                       <div>
                         <h4 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
                           <span>{integrante.nome}</span>
+                          {isSelf && (
+                            <Badge variant="primary" size="sm" className="text-[9px] py-0 px-1">
+                              Você
+                            </Badge>
+                          )}
                         </h4>
                         <div className="mt-1">{renderFuncaoBadges(integrante.funcao)}</div>
                       </div>
@@ -361,6 +418,17 @@ export const IntegrantesPage: React.FC = () => {
                   >
                     {isAtivo ? 'Desativar' : 'Ativar'}
                   </Button>
+
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleOpenDeleteModal(integrante)}
+                    disabled={isSelf}
+                    leftIcon={<Trash2 size={13} />}
+                    title={isSelf ? 'Você não pode excluir sua própria conta' : 'Excluir integrante'}
+                  >
+                    Excluir
+                  </Button>
                 </div>
               </Card>
             );
@@ -401,6 +469,23 @@ export const IntegrantesPage: React.FC = () => {
           await refreshData();
         }}
       />
+
+      {/* Modal de Confirmação de Exclusão */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          if (!isDeleting) {
+            setIsDeleteModalOpen(false);
+            setIntegranteToDelete(null);
+            setDeleteErrorMsg(null);
+          }
+        }}
+        integrante={integranteToDelete}
+        onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
+        errorMsg={deleteErrorMsg}
+      />
     </div>
   );
 };
+

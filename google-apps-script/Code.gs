@@ -799,6 +799,32 @@ function doPost(e) {
       }
     }
 
+    // 12. EXCLUIR INTEGRANTE
+    if (action === "excluirIntegrante" || action === "deleteIntegrante") {
+      var targetNome = String(params.nome || params.nomeOriginal || "").trim();
+      if (!targetNome) {
+        return jsonResponse({ sucesso: false, mensagem: "Nome do integrante é obrigatório." });
+      }
+
+      var intSheet = ss.getSheetByName(ABA_INTEGRANTES);
+      if (intSheet) {
+        var intData = intSheet.getDataRange().getValues();
+        var targetLower = targetNome.toLowerCase();
+
+        for (var idx = 1; idx < intData.length; idx++) {
+          var rowName = String(intData[idx][0] || "").trim().toLowerCase();
+          if (rowName === targetLower) {
+            intSheet.deleteRow(idx + 1);
+            return jsonResponse({
+              sucesso: true,
+              mensagem: "Integrante '" + targetNome + "' removido permanentemente da planilha."
+            });
+          }
+        }
+      }
+      return jsonResponse({ sucesso: false, mensagem: "Integrante não encontrado na planilha." });
+    }
+
     return jsonResponse({ sucesso: false, mensagem: "Ação POST não reconhecida: " + action });
   } catch (err) {
     return jsonResponse({ sucesso: false, mensagem: "Erro no doPost: " + err.toString() });
