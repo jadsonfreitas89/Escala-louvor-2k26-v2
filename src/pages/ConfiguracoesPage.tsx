@@ -9,15 +9,20 @@ import {
   ExternalLink,
   ShieldCheck,
   Bell,
-  BellRing
+  BellRing,
+  Users
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { useEscala } from '../context/EscalaContext';
 import { useNotifications } from '../context/NotificationContext';
+import { useNavigation } from '../context/NavigationContext';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 
 export const ConfiguracoesPage: React.FC = () => {
+  const { isLider } = useAuth();
+  const { navigate } = useNavigation();
   const { isRefreshing, refreshData, lastUpdated } = useEscala();
   const {
     browserPermission,
@@ -47,6 +52,38 @@ export const ConfiguracoesPage: React.FC = () => {
           Gerenciamento de notificações, cache local e conectividade com o Google Apps Script.
         </p>
       </div>
+
+      {/* Painel do Líder - Gerenciamento de Integrantes */}
+      {isLider && (
+        <Card variant="highlight" className="space-y-4 relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold">
+                <Users size={20} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-zinc-100">Gestão de Integrantes</h3>
+                  <Badge variant="amber" size="sm">Liderança</Badge>
+                </div>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  Cadastrar membros, atualizar funções, instrumentos e permissões do aplicativo.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => navigate('/integrantes')}
+            leftIcon={<Users size={15} />}
+            className="w-full"
+          >
+            Abrir Gerenciamento de Integrantes
+          </Button>
+        </Card>
+      )}
 
       {/* Notifications Section */}
       <Card variant="default" className="space-y-4">

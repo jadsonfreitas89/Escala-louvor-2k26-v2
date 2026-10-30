@@ -536,6 +536,15 @@ export function createApiApp(): Express {
         return;
       }
 
+      // Verificação de Ativo / Inativo
+      if (integrante.ativo === 'NAO') {
+        res.status(403).json({
+          sucesso: false,
+          mensagem: "Sua conta está inativa no sistema. Entre em contato com a liderança do ministério."
+        });
+        return;
+      }
+
       // 3. Validação de senha
       const memberSenha = (integrante.senha || "").toString().trim();
       if (memberSenha) {
@@ -2125,6 +2134,197 @@ export function createApiApp(): Express {
 
   app.delete("/api/recados/:id", authenticateToken, requireLider, handleExcluirRecado);
   app.post("/api/recados/excluir", authenticateToken, requireLider, handleExcluirRecado);
+
+  // =========================================================================
+  // ROTAS DE GERENCIAMENTO DE INTEGRANTES (LÍDER)
+  // =========================================================================
+
+  /**
+   * POST /api/integrantes (Cadastrar novo integrante)
+   */
+  app.post("/api/integrantes", authenticateToken, requireLider, async (req: Request, res: Response) => {
+    try {
+      const { nome, funcao, instrumento, senha, ativo } = req.body;
+
+      const cleanNome = (nome || "").toString().trim();
+      const cleanFuncao = (funcao || "").toString().trim();
+      const cleanInstrumento = (instrumento || "").toString().trim();
+      const cleanSenha = (senha || "").toString().trim();
+      const cleanAtivo = (ativo || "SIM").toString().trim().toUpperCase();
+
+      if (!cleanNome) {
+        res.status(400).json({ sucesso: false, mensagem: "Nome do integrante é obrigatório." });
+        return;
+      }
+
+      if (!cleanFuncao) {
+        res.status(400).json({ sucesso: false, mensagem: "Pelo menos uma função deve ser selecionada." });
+        return;
+      }
+
+      const gasResponse = await fetch(GAS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "salvarIntegrante",
+          nome: cleanNome,
+          novoNome: cleanNome,
+          funcao: cleanFuncao,
+          instrumento: cleanInstrumento,
+          senha: cleanSenha,
+          ativo: cleanAtivo
+        })
+      });
+
+      const data: any = await gasResponse.json();
+
+      if (!gasResponse.ok || !data.sucesso) {
+        res.status(400).json({
+          sucesso: false,
+          mensagem: data?.mensagem || "Não foi possível cadastrar o integrante no Google Apps Script."
+        });
+        return;
+      }
+
+      syncEscalaDataBackground();
+
+      res.json({
+        sucesso: true,
+        mensagem: data.mensagem || `Integrante "${cleanNome}" cadastrado com sucesso.`,
+        integrante: {
+          nome: cleanNome,
+          funcao: cleanFuncao,
+          instrumento: cleanInstrumento,
+          ativo: cleanAtivo
+        }
+      });
+    } catch (err: any) {
+      console.error("[POST /api/integrantes] Erro ao cadastrar integrante:", err);
+      res.status(500).json({
+        sucesso: false,
+        mensagem: err.message || "Erro interno ao cadastrar integrante."
+      });
+    }
+  });
+
+  /**
+   * PUT /api/integrantes/:nome (Editar integrante existente)
+   */
+  app.put("/api/integrantes/:nome", authenticateToken, requireLider, async (req: Request, res: Response) => {
+    try {
+      const nomeOriginal = decodeURIComponent(req.params.nome || "").trim();
+      const { novoNome, funcao, instrumento, senha, ativo } = req.body;
+
+      const effectiveNovoNome = (novoNome || nomeOriginal || "").toString().trim();
+      const cleanFuncao = (funcao || "").toString().trim();
+      const cleanInstrumento = (instrumento || "").toString().trim();
+      const cleanSenha = (senha || "").toString().trim();
+      const cleanAtivo = (ativo || "SIM").toString().trim().toUpperCase();
+
+      if (!effectiveNovoNome) {
+        res.status(400).json({ sucesso: false, mensagem: "Nome do integrante é obrigatório." });
+        return;
+      }
+
+      if (!cleanFuncao) {
+        res.status(400).json({ sucesso: false, mensagem: "Pelo menos uma função deve ser selecionada." });
+        return;
+      }
+
+      const gasResponse = await fetch(GAS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "salvarIntegrante",
+          nomeOriginal: nomeOriginal,
+          novoNome: effectiveNovoNome,
+          funcao: cleanFuncao,
+          instrumento: cleanInstrumento,
+          senha: cleanSenha,
+          ativo: cleanAtivo
+        })
+      });
+
+      const data: any = await gasResponse.json();
+
+      if (!gasResponse.ok || !data.sucesso) {
+        res.status(400).json({
+          sucesso: false,
+          mensagem: data?.mensagem || "Não foi possível atualizar o integrante no Google Apps Script."
+        });
+        return;
+      }
+
+      syncEscalaDataBackground();
+
+      res.json({
+        sucesso: true,
+        mensagem: data.mensagem || `Integrante "${effectiveNovoNome}" atualizado com sucesso.`,
+        integrante: {
+          nome: effectiveNovoNome,
+          funcao: cleanFuncao,
+          instrumento: cleanInstrumento,
+          ativo: cleanAtivo
+        }
+      });
+    } catch (err: any) {
+      console.error("[PUT /api/integrantes/:nome] Erro ao editar integrante:", err);
+      res.status(500).json({
+        sucesso: false,
+        mensagem: err.message || "Erro interno ao editar integrante."
+      });
+    }
+  });
+
+  /**
+   * POST /api/integrantes/:nome/status (Ativar / Desativar integrante)
+   */
+  app.post("/api/integrantes/:nome/status", authenticateToken, requireLider, async (req: Request, res: Response) => {
+    try {
+      const nomeOriginal = decodeURIComponent(req.params.nome || "").trim();
+      const { ativo } = req.body;
+      const cleanAtivo = (ativo || "SIM").toString().trim().toUpperCase();
+
+      if (!nomeOriginal) {
+        res.status(400).json({ sucesso: false, mensagem: "Nome do integrante é obrigatório." });
+        return;
+      }
+
+      const gasResponse = await fetch(GAS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "salvarIntegrante",
+          nomeOriginal: nomeOriginal,
+          novoNome: nomeOriginal,
+          ativo: cleanAtivo
+        })
+      });
+
+      const data: any = await gasResponse.json();
+
+      if (!gasResponse.ok || !data.sucesso) {
+        res.status(400).json({
+          sucesso: false,
+          mensagem: data?.mensagem || "Não foi possível alterar a situação do integrante."
+        });
+        return;
+      }
+
+      syncEscalaDataBackground();
+
+      res.json({
+        sucesso: true,
+        mensagem: data.mensagem || `Situação do integrante "${nomeOriginal}" atualizada para ${cleanAtivo === "SIM" ? "Ativo" : "Inativo"}.`
+      });
+    } catch (err: any) {
+      console.error("[POST /api/integrantes/:nome/status] Erro:", err);
+      res.status(500).json({
+        sucesso: false,
+        mensagem: err.message || "Erro interno ao alterar situação do integrante."
+      });
+    }
+  });
 
   // =========================================================================
   // ROTAS DE NOTIFICAÇÕES (Sincronização & Persistência)

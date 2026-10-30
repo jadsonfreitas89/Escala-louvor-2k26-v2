@@ -317,6 +317,19 @@ export const HomePage: React.FC = () => {
             <h4 className="text-sm font-bold text-zinc-200">Solicitar Substituição</h4>
             <p className="text-xs text-zinc-500 mt-1">Troca de data com aprovação de liderança.</p>
           </div>
+
+          {isLider && (
+            <div
+              onClick={() => navigate('/integrantes')}
+              className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 cursor-pointer transition-all hover:-translate-y-0.5 group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold mb-3 group-hover:scale-110 transition-transform">
+                <Users size={18} />
+              </div>
+              <h4 className="text-sm font-bold text-zinc-200">Gerenciar Integrantes</h4>
+              <p className="text-xs text-zinc-500 mt-1">Cadastro de membros, funções, instrumentos e permissões.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -28,6 +28,8 @@ export const Header: React.FC = () => {
         return 'Meu Perfil';
       case '/configuracoes':
         return 'Configurações do Sistema';
+      case '/integrantes':
+        return 'Gerenciamento de Integrantes';
       case '/login':
         return 'Acesso ao Sistema';
       default:

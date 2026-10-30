@@ -160,7 +160,8 @@ function doGet(e) {
               funcao: String(intData[j][1] || "").trim(),
               senha: String(intData[j][2] || "").trim(),
               instrumento: String(intData[j][3] || "").trim(),
-              tokenFcm: String(intData[j][4] || "").trim()
+              tokenFcm: String(intData[j][4] || "").trim(),
+              ativo: String(intData[j][5] || "SIM").trim().toUpperCase()
             });
           }
         }
@@ -719,6 +720,83 @@ function doPost(e) {
         }
       }
       return jsonResponse({ sucesso: false, mensagem: "Solicitação não encontrada na planilha." });
+    }
+
+    // 11. SALVAR / EDITAR / CADASTRAR INTEGRANTE
+    if (action === "salvarIntegrante" || action === "editarIntegrante" || action === "cadastrarIntegrante") {
+      var nomeOriginal = String(params.nomeOriginal || params.nome || "").trim();
+      var novoNome = String(params.novoNome || params.nome || "").trim();
+      var funcao = String(params.funcao || "").trim();
+      var instrumento = String(params.instrumento || "").trim();
+      var senha = String(params.senha || "").trim();
+      var ativo = String(params.ativo || "SIM").trim().toUpperCase();
+
+      if (!novoNome) {
+        return jsonResponse({ sucesso: false, mensagem: "Nome do integrante é obrigatório." });
+      }
+
+      var intSheet = ss.getSheetByName(ABA_INTEGRANTES);
+      if (!intSheet) {
+        intSheet = ss.insertSheet(ABA_INTEGRANTES);
+        intSheet.appendRow(["Nome", "Função", "Senha", "Instrumento", "Token FCM", "Ativo"]);
+      }
+
+      var intData = intSheet.getDataRange().getValues();
+      var foundRowIndex = -1;
+      var searchName = (nomeOriginal || novoNome).toLowerCase();
+
+      for (var idx = 1; idx < intData.length; idx++) {
+        var rowName = String(intData[idx][0] || "").trim().toLowerCase();
+        if (rowName === searchName) {
+          foundRowIndex = idx + 1;
+          break;
+        }
+      }
+
+      // Se está tentando cadastrar novo ou alterar nome, verifica se novoNome já existe
+      if (foundRowIndex === -1 || (nomeOriginal && nomeOriginal.toLowerCase() !== novoNome.toLowerCase())) {
+        for (var checkIdx = 1; checkIdx < intData.length; checkIdx++) {
+          if (checkIdx + 1 === foundRowIndex) continue;
+          var existingName = String(intData[checkIdx][0] || "").trim().toLowerCase();
+          if (existingName === novoNome.toLowerCase()) {
+            return jsonResponse({ sucesso: false, mensagem: "Já existe um integrante cadastrado com o nome '" + novoNome + "'." });
+          }
+        }
+      }
+
+      if (foundRowIndex > 0) {
+        intSheet.getRange(foundRowIndex, 1).setValue(novoNome);
+        intSheet.getRange(foundRowIndex, 2).setValue(funcao);
+        if (senha) {
+          intSheet.getRange(foundRowIndex, 3).setValue(senha);
+        }
+        intSheet.getRange(foundRowIndex, 4).setValue(instrumento);
+        // Coluna 5 (Token FCM) mantida intacta!
+        intSheet.getRange(foundRowIndex, 6).setValue(ativo);
+
+        return jsonResponse({
+          sucesso: true,
+          mensagem: "Integrante '" + novoNome + "' atualizado com sucesso na planilha.",
+          integrante: {
+            nome: novoNome,
+            funcao: funcao,
+            instrumento: instrumento,
+            ativo: ativo
+          }
+        });
+      } else {
+        intSheet.appendRow([novoNome, funcao, senha, instrumento, "", ativo]);
+        return jsonResponse({
+          sucesso: true,
+          mensagem: "Integrante '" + novoNome + "' cadastrado com sucesso na planilha.",
+          integrante: {
+            nome: novoNome,
+            funcao: funcao,
+            instrumento: instrumento,
+            ativo: ativo
+          }
+        });
+      }
     }
 
     return jsonResponse({ sucesso: false, mensagem: "Ação POST não reconhecida: " + action });

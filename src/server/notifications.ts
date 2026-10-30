@@ -1090,11 +1090,11 @@ export function processarLembretesDeCulto(
  * Mensagem: "ATENÇÃO! Tem um novo recado!"
  * Chave: recado:{recadoId}:{destinatario}
  */
-export async function processarNotificacaoNovoRecado(
+export function processarNotificacaoNovoRecado(
   recadoId: string,
   integrantes: IntegranteRef[],
   origem: "APP" | "GOOGLE_SHEETS" = "APP"
-): Promise<number> {
+): number {
   if (!recadoId || !integrantes || integrantes.length === 0) return 0;
   
   const notificacoesParaPersistir: NotificacaoRecord[] = [];
@@ -1123,10 +1123,9 @@ export async function processarNotificacaoNovoRecado(
 
   // 2. Persiste em lote no Sheets se houver algo a salvar
   if (notificacoesParaPersistir.length > 0 && origem !== "GOOGLE_SHEETS") {
-    const persistido = await pushNotificacoesLoteParaGas(notificacoesParaPersistir);
-    if (!persistido) {
-      throw new Error(`Falha ao persistir notificações de recado ${recadoId} na aba NOTIFICAÇÕES do Google Sheets.`);
-    }
+    pushNotificacoesLoteParaGas(notificacoesParaPersistir).catch((err) => {
+      console.error(`Falha ao persistir notificações de recado ${recadoId} na aba NOTIFICAÇÕES:`, err);
+    });
   }
 
   // 3. Dispara FCM após persistência confirmada

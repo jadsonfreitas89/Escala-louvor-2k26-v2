@@ -65,6 +65,24 @@ export interface UpdateEscalaCompletaPayload {
   linkLouvores?: LouvorItem[];
 }
 
+export interface CreateIntegrantePayload {
+  nome: string;
+  funcao: string;
+  instrumento?: string;
+  senha?: string;
+  ativo?: 'SIM' | 'NAO' | string;
+}
+
+export interface UpdateIntegrantePayload {
+  nomeOriginal?: string;
+  novoNome?: string;
+  nome?: string;
+  funcao: string;
+  instrumento?: string;
+  senha?: string;
+  ativo?: 'SIM' | 'NAO' | string;
+}
+
 export interface ApiResponse {
   sucesso: boolean;
   mensagem: string;
@@ -885,6 +903,106 @@ class ApiService {
       console.error('Erro ao ler cache local:', e);
     }
     return null;
+  }
+
+  // =========================================================================
+  // MÓDULO DE GERENCIAMENTO DE INTEGRANTES (LÍDER)
+  // =========================================================================
+
+  /**
+   * Cadastra um novo integrante no ministério (Líder)
+   */
+  public async createIntegrante(payload: CreateIntegrantePayload): Promise<ApiResponse> {
+    const token = this.getToken();
+    if (!token) {
+      return { sucesso: false, mensagem: 'Você precisa estar autenticado como Líder para cadastrar integrantes.' };
+    }
+
+    try {
+      const response = await fetch('/api/integrantes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.sucesso) {
+        return { sucesso: false, mensagem: data.mensagem || 'Não foi possível cadastrar o integrante.' };
+      }
+
+      return { sucesso: true, mensagem: data.mensagem || 'Integrante cadastrado com sucesso.' };
+    } catch (err: any) {
+      console.error('Erro ao cadastrar integrante:', err);
+      return { sucesso: false, mensagem: 'Erro de comunicação ao cadastrar integrante.' };
+    }
+  }
+
+  /**
+   * Atualiza dados de um integrante existente (Líder)
+   */
+  public async updateIntegrante(nome: string, payload: UpdateIntegrantePayload): Promise<ApiResponse> {
+    const token = this.getToken();
+    if (!token) {
+      return { sucesso: false, mensagem: 'Você precisa estar autenticado como Líder para editar integrantes.' };
+    }
+
+    try {
+      const response = await fetch(`/api/integrantes/${encodeURIComponent(nome)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.sucesso) {
+        return { sucesso: false, mensagem: data.mensagem || 'Não foi possível atualizar o integrante.' };
+      }
+
+      return { sucesso: true, mensagem: data.mensagem || 'Integrante atualizado com sucesso.' };
+    } catch (err: any) {
+      console.error('Erro ao atualizar integrante:', err);
+      return { sucesso: false, mensagem: 'Erro de comunicação ao atualizar integrante.' };
+    }
+  }
+
+  /**
+   * Altera a situação (Ativo/Inativo) de um integrante (Líder)
+   */
+  public async toggleIntegranteStatus(nome: string, ativo: 'SIM' | 'NAO'): Promise<ApiResponse> {
+    const token = this.getToken();
+    if (!token) {
+      return { sucesso: false, mensagem: 'Você precisa estar autenticado como Líder para alterar o status do integrante.' };
+    }
+
+    try {
+      const response = await fetch(`/api/integrantes/${encodeURIComponent(nome)}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ ativo })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.sucesso) {
+        return { sucesso: false, mensagem: data.mensagem || 'Não foi possível alterar a situação do integrante.' };
+      }
+
+      return { sucesso: true, mensagem: data.mensagem || 'Situação do integrante atualizada com sucesso.' };
+    } catch (err: any) {
+      console.error('Erro ao alterar situação do integrante:', err);
+      return { sucesso: false, mensagem: 'Erro de comunicação ao alterar situação do integrante.' };
+    }
   }
 }
 

@@ -10,7 +10,8 @@ import {
   Music,
   LogOut,
   Sparkles,
-  Bell
+  Bell,
+  Users
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '../../context/NavigationContext';
@@ -34,6 +35,7 @@ export const DesktopSidebar: React.FC = () => {
       icon: <Bell size={18} />,
       badge: unreadCount > 0 ? `${unreadCount}` : undefined
     },
+    ...(isLider ? [{ label: 'Integrantes', route: '/integrantes' as AppRoute, icon: <Users size={18} /> }] : []),
     { label: 'Meu Perfil', route: '/perfil', icon: <User size={18} /> },
     { label: 'Configurações', route: '/configuracoes', icon: <Settings size={18} /> }
   ];

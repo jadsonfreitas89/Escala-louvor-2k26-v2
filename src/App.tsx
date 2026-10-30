@@ -11,6 +11,7 @@ import { SolicitacoesPage } from './pages/SolicitacoesPage';
 import { NotificacoesPage } from './pages/NotificacoesPage';
 import { PerfilPage } from './pages/PerfilPage';
 import { ConfiguracoesPage } from './pages/ConfiguracoesPage';
+import { IntegrantesPage } from './pages/IntegrantesPage';
 import { PwaDiagnosticPage } from './pages/PwaDiagnosticPage';
 import { LoginPage } from './pages/LoginPage';
 import { LoadingState } from './components/ui/LoadingState';
@@ -26,7 +27,8 @@ const AppContent: React.FC = () => {
       if (
         currentRoute === '/perfil' ||
         currentRoute === '/solicitacoes' ||
-        currentRoute === '/notificacoes'
+        currentRoute === '/notificacoes' ||
+        currentRoute === '/integrantes'
       ) {
         navigate('/login');
       }
@@ -59,6 +61,7 @@ const AppContent: React.FC = () => {
       {currentRoute === '/notificacoes' && <NotificacoesPage />}
       {currentRoute === '/perfil' && <PerfilPage />}
       {currentRoute === '/configuracoes' && <ConfiguracoesPage />}
+      {currentRoute === '/integrantes' && <IntegrantesPage />}
       {currentRoute === '/pwa-diagnostic' && <PwaDiagnosticPage />}
     </AppLayout>
   );

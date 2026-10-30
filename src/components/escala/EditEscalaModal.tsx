@@ -472,13 +472,18 @@ export const EditEscalaModal: React.FC<EditEscalaModalProps> = ({
     }
   };
 
-  // Filter available members
-  const dirigentesList = integrantes.filter(
+  // Filter available members (must be active)
+  const activeIntegrantes = integrantes.filter((i) => i.ativo !== 'NAO');
+  const dirigentesList = activeIntegrantes.filter(
     (i) => i.funcao.toLowerCase().includes('dirigente') || i.funcao.toLowerCase().includes('lider')
   );
-  const vocalsList = integrantes.filter((i) => i.funcao.toLowerCase().includes('vocal'));
-  const musicosList = integrantes.filter((i) => i.funcao.toLowerCase().includes('musico'));
-  const mesariosList = integrantes.filter((i) => i.funcao.toLowerCase().includes('mesario'));
+  const vocalsList = activeIntegrantes.filter((i) => i.funcao.toLowerCase().includes('vocal'));
+  const musicosList = activeIntegrantes.filter(
+    (i) => i.funcao.toLowerCase().includes('musico') || i.funcao.toLowerCase().includes('músico')
+  );
+  const mesariosList = activeIntegrantes.filter(
+    (i) => i.funcao.toLowerCase().includes('mesario') || i.funcao.toLowerCase().includes('mesário')
+  );
 
   return (
     <div

@@ -11,6 +11,7 @@ export interface Integrante {
   senha?: string;
   instrumento?: string;
   tokenFcm?: string;
+  ativo?: 'SIM' | 'NAO' | string;
 }
 
 export interface Escala {
@@ -172,7 +173,8 @@ export type AppRoute =
   | '/notificacoes'
   | '/perfil'
   | '/configuracoes'
-  | '/pwa-diagnostic';
+  | '/pwa-diagnostic'
+  | '/integrantes';
 
 export interface NavigationItem {
   name: string;

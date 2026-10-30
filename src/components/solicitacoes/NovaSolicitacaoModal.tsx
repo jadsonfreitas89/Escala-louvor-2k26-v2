@@ -86,7 +86,7 @@ export const NovaSolicitacaoModal: React.FC<NovaSolicitacaoModalProps> = ({
     const normCurrentUser = normalizarNome(currentUser.nome);
 
     return integrantes
-      .filter((i) => normalizarNome(i.nome) !== normCurrentUser)
+      .filter((i) => i.ativo !== 'NAO' && normalizarNome(i.nome) !== normCurrentUser)
       .map((integrante) => {
         // Verifica se o integrante já está escalado nesta data
         const jaEscalado = isUserInEscala(selectedEscala, integrante.nome);

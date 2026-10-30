@@ -470,7 +470,7 @@ async function runTests() {
   const recIdTest = "rec_test_999";
   const evKey1 = `recado:${recIdTest}:lucas_solicitante`;
   const evKey2 = `recado:${recIdTest}:maria_santos`;
-  assert(evKey1 !== evKey2, "Cenário 5: Chave de idempotência do recado deve ser única por recadoId + destinatário.");
+  assert((evKey1 as string) !== (evKey2 as string), "Cenário 5: Chave de idempotência do recado deve ser única por recadoId + destinatário.");
 
   // Cenário 6: Teste de exclusão de recado (simulado)
   console.log("\n13. Testando exclusão definitiva de recado...");
